@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Join Group</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <!-- Import Space Mono font from Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Import Vue.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+
+    <style>
+      /* Basic Reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Space Mono", monospace;
+      }
+
+      /* Background styling with image and color overlay */
+      body {
+        background-image: url("images/bg-image.jpg"),
+          linear-gradient(
+            45deg,
+            #b3cdd1 25%,
+            transparent 25%,
+            transparent 75%,
+            #b3cdd1 75%,
+            #b3cdd1
+          ),
+          linear-gradient(
+            45deg,
+            #b3cdd1 25%,
+            transparent 25%,
+            transparent 75%,
+            #b3cdd1 75%,
+            #b3cdd1
+          );
+        background-size: cover, 40px 40px, 40px 40px;
+        background-position: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      .join-group-card {
+        opacity: 85%;
+        text-align: center;
+        background-color: #f2fcfc;
+        width: 400px;
+        padding: 40px;
+        border-radius: 25px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+
+      .join-group-card h1 {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+        color: #000;
+        letter-spacing: 2px;
+      }
+
+      .join-group-card p {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 20px;
+      }
+
+      .icon-container {
+        font-size: 3rem;
+        color: #333;
+        margin-bottom: 20px;
+      }
+
+      .input-container {
+        margin-bottom: 20px;
+      }
+
+      .input-container input {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 25px;
+        outline: none;
+        font-size: 1rem;
+        text-align: center;
+        color: #999;
+        background-color: #e8f1f2;
+      }
+
+      .join-btn {
+        display: inline-block;
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+        color: #000;
+        background-color: #a7eaf0;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      .join-btn:hover {
+        background-color: #93d8de;
+      }
+
+      .footer-link {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 0.9rem;
+        color: #666;
+        text-decoration: none;
+      }
+
+      .footer-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Vue Application Root -->
+    <div id="app" class="join-group-card">
+      <div class="icon-container">
+        <i class="fas fa-users"></i>
+      </div>
+      <h1>CREATE NEW GROUP</h1>
+      <p>Input your group name</p>
+
+      <div class="input-container">
+        <input
+          type="text"
+          placeholder="Group Name"
+          v-model="groupCode"
+          @input="clearError"
+        />
+      </div>
+
+      <button class="join-btn" @click="joinGroup">Create</button>
+
+      <!-- Error message for form validation -->
+      <p v-if="errorMessage" style="color: red; margin-top: 10px">
+        {{ errorMessage }}
+      </p>
+
+      <a href="index.html" class="footer-link">Go back</a>
+    </div>
+
+    <script>
+      new Vue({
+        el: "#app",
+        data: {
+          groupCode: "",
+          errorMessage: "",
+        },
+        methods: {
+          joinGroup() {
+            // Simple form validation
+            if (!this.groupCode) {
+              this.errorMessage = "Group code is required.";
+              return;
+            }
+
+            // Simulate joining a group
+            alert(`Group Name is : ${this.groupCode}`);
+          },
+          clearError() {
+            this.errorMessage = "";
+          },
+        },
+      });
+    </script>
+  </body>
+</html>

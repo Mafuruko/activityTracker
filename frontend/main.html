@@ -317,61 +317,22 @@
                     time: "Time",
                     status: "today",
                   },
-                  {
-                    title: "Shower",
-                    date: "Date",
-                    time: "Time",
-                    status: "today",
-                  },
-                ],
-                Future: [
-                  {
-                    title: "Work",
-                    date: "Date",
-                    time: "Time",
-                    status: "future",
-                  },
-                  {
-                    title: "Buy Groceries",
-                    date: "Date",
-                    time: "Time",
-                    status: "future",
-                  },
                 ],
               },
             },
             {
               name: "User Now",
-              activities: {
-                Overdue: [
-                  {
-                    title: "Work",
-                    date: "Date",
-                    time: "Time",
-                    status: "overdue",
-                  },
-                ],
-                Today: [
-                  {
-                    title: "Shower",
-                    date: "Date",
-                    time: "Time",
-                    status: "today",
-                  },
-                ],
-                Future: [
-                  {
-                    title: "Buy Groceries",
-                    date: "Date",
-                    time: "Time",
-                    status: "future",
-                  },
-                ],
-              },
+              activities: {}, // Loaded from localStorage
             },
           ],
         },
+        mounted() {
+          const storedActivities = JSON.parse(localStorage.getItem("userNowActivities"));
+          if (storedActivities) {
+            this.$set(this.users[1], "activities", storedActivities);
+          }
+        },
       });
-    </script>
+    </script>    
   </body>
 </html>

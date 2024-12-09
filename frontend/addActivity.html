@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Group Activity Tracker - Profile Edit</title>
+    <title>Group Activity Tracker - Add Activity</title>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
@@ -74,7 +74,7 @@
         color: #666;
       }
 
-      /* Centered Edit Profile Card */
+      /* Centered Add Activity Card */
       .edit-profile-card {
         background-color: #f2fcfc;
         border-radius: 25px;
@@ -91,26 +91,6 @@
         color: #000;
       }
 
-      .edit-profile-card img {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        margin-bottom: 10px;
-      }
-
-      .edit-profile-card button {
-        background-color: #007bff;
-        color: #fff;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-
-      .edit-profile-card button:hover {
-        background-color: #0056b3;
-      }
-
       .edit-profile-card input {
         width: 100%;
         padding: 10px;
@@ -125,60 +105,78 @@
         font-size: 1rem;
         color: #666;
       }
+
+      .edit-profile-card button {
+        background-color: #007bff;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .edit-profile-card button:hover {
+        background-color: #0056b3;
+      }
     </style>
   </head>
   <body>
-    <!-- Vue Application Root -->
-    <div id="app" class="main-wrapper">
-      <!-- Navbar -->
-      <div class="navbar">
-        <a href="main.html"> <i class="fa-solid fa-arrow-left"></i></a>
+    <div class="navbar">
+      <a href="main.html"> <i class="fa-solid fa-arrow-left"></i></a>
+    </div>
+
+    <div class="edit-profile-card">
+      <h2>Add New Activity</h2>
+
+      <div>
+        <label for="activityName">Activity Name</label>
+        <input type="text" id="activityName" placeholder="Enter your activity name" />
       </div>
 
-      <!-- Centered Edit Profile Card -->
-      <div class="edit-profile-card">
-        <h2>Add New Activity</h2>
+      <div>
+        <label for="deadline">Deadline</label>
+        <input type="datetime-local" id="deadline" />
+      </div>
 
-        <!-- Name Input -->
-        <div>
-          <label for="activityName">Activity Name</label>
-          <input
-            type="text"
-            id="activityName"
-            placeholder="Enter your Activity name"
-          />
-        </div>
+      <div>
+        <label for="category">Category</label>
+        <input type="text" id="category" placeholder="Enter a new or existing category" />
+      </div>
 
-        <!-- Email Input -->
-        <div>
-          <label for="deadline">Deadline</label>
-          <input type="datetime-local" id="deadline" />
-        </div>
+      <div>
+        <label for="note">Note</label>
+        <input type="text" id="note" placeholder="Enter a note (optional)" />
+      </div>
 
-        <!-- Password Input -->
-        <div>
-          <label for="category">Category</label>
-          <input
-            type="dropdown"
-            id="category"
-            placeholder="Enter a new Category"
-          />
-        </div>
-
-        <!-- Confirm Password Input -->
-        <div>
-          <label for="Note">Note</label>
-          <input type="text" id="Note" placeholder="Enter a Note" />
-        </div>
-
-        <div>
-          <label for="Note">Repeat Task?</label>
-        </div>
-        <input type="text" id="Note" placeholder="Leave if not Repeated" />
-
-        <!-- Save Button -->
-        <div style="margin-top: 20px"><button>Save Changes</button></div>
+      <div style="margin-top: 20px">
+        <button>Save Changes</button>
       </div>
     </div>
+
+    <script>
+      document.querySelector("button").addEventListener("click", function () {
+        const activityName = document.getElementById("activityName").value;
+        const deadline = document.getElementById("deadline").value;
+        const category = document.getElementById("category").value;
+        const note = document.getElementById("note").value;
+
+        const status = "future";
+
+        let activities = JSON.parse(localStorage.getItem("userNowActivities")) || {};
+
+        if (!activities[category]) activities[category] = [];
+        activities[category].push({
+          title: activityName,
+          date: deadline.split("T")[0],
+          time: deadline.split("T")[1],
+          note: note,
+          status: status,
+        });
+
+        localStorage.setItem("userNowActivities", JSON.stringify(activities));
+
+        window.location.href = "main.html";
+      });
+    </script>
   </body>
 </html>

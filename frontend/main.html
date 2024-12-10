@@ -217,7 +217,7 @@
             v-for="(activities, category) in user.activities"
             :key="category"
           >
-            <h3>{{ category }}</h3>
+            <h3>{{ categorizeActivities(activities[0]?.date) }}</h3>
             <div
               v-for="activity in activities"
               :key="activity.title"
@@ -283,23 +283,34 @@
                 Today: [
                   {
                     title: "Wake up",
-                    date: "Date",
-                    time: "Time",
+                    date: "2024-12-10",
+                    time: "08:00",
                     status: "today",
                   },
                 ],
               },
             },
-            { name: "User Now", activities: { Today: [] } },
+            {
+              name: "User Now",
+              activities: {
+                Today: [],
+              },
+            },
             {
               name: "Nama User 2",
               activities: {
                 Today: [
                   {
-                    title: "Wake up",
-                    date: "Date",
-                    time: "Time",
-                    status: "today",
+                    title: "Meeting",
+                    date: "2024-12-05",
+                    time: "10:00",
+                    status: "overdue",
+                  },
+                  {
+                    title: "Lunch",
+                    date: "2024-12-13",
+                    time: "12:30",
+                    status: "future",
                   },
                 ],
               },
@@ -308,11 +319,28 @@
           newActivity: { title: "", date: "", time: "", status: "future" },
         },
         methods: {
+          categorizeActivities(activityDate) {
+            const today = new Date().setHours(0, 0, 0, 0); // Start of today
+            const activityDateTime = new Date(activityDate).setHours(
+              0,
+              0,
+              0,
+              0
+            );
+
+            if (activityDateTime < today) {
+              return "Overdue";
+            } else if (activityDateTime === today) {
+              return "Today";
+            } else {
+              return "Future";
+            }
+          },
           addActivity() {
             const newActivity = {
               title: prompt("Enter activity title:"),
-              date: prompt("Enter date:"),
-              time: prompt("Enter time:"),
+              date: prompt("Enter date (YYYY-MM-DD):"),
+              time: prompt("Enter time (HH:mm):"),
               status: "future",
             };
             this.users[1].activities.Today.push(newActivity);
@@ -322,14 +350,11 @@
             );
           },
           toggleComplete(activity) {
-            // Toggle between "completed" and "future"
             if (activity.status === "completed") {
               activity.status = "future";
             } else {
               activity.status = "completed";
             }
-
-            // Save state for "User Now" in localStorage
             localStorage.setItem(
               "userNowActivities",
               JSON.stringify(this.users[1].activities)

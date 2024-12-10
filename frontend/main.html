@@ -229,7 +229,8 @@
                 <span>{{ activity.date }} - {{ activity.time }}</span>
                 <input
                   type="checkbox"
-                  v-model="activity.status"
+                  :checked="activity.status === 'completed'"
+                  :disabled="index !== 1"
                   @change="toggleComplete(activity)"
                 />
               </div>
@@ -321,15 +322,34 @@
             );
           },
           toggleComplete(activity) {
-            activity.status =
-              activity.status === "completed" ? "future" : "completed";
+            // Toggle between "completed" and "future"
+            if (activity.status === "completed") {
+              activity.status = "future";
+            } else {
+              activity.status = "completed";
+            }
+
+            // Save state for "User Now" in localStorage
+            localStorage.setItem(
+              "userNowActivities",
+              JSON.stringify(this.users[1].activities)
+            );
           },
         },
         mounted() {
           const savedActivities = JSON.parse(
             localStorage.getItem("userNowActivities")
           );
-          if (savedActivities) this.users[1].activities = savedActivities;
+          if (savedActivities) {
+            this.users[1].activities = savedActivities;
+
+            // Ensure all activities default to "future" if not completed
+            this.users[1].activities.Today.forEach((activity) => {
+              if (!activity.status || activity.status !== "completed") {
+                activity.status = "future";
+              }
+            });
+          }
         },
       });
     </script>

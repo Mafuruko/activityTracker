@@ -144,9 +144,21 @@
           <img
             src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
             alt="Profile Picture"
+            id="profile-pic-preview"
           />
         </div>
-        <div><button>Change Profile Picture</button></div>
+        <div>
+          <button id="change-profile-picture" type="button">
+            Change Profile Picture
+          </button>
+          <input
+            type="file"
+            id="profile-picture-input"
+            accept="image/*"
+            style="display: none"
+          />
+        </div>
+
         <!-- Name Input -->
         <div>
           <label for="name">Name</label>
@@ -190,7 +202,7 @@
 
         document.getElementById("name").value = userData.name || "";
         document.getElementById("email").value = userData.email || "";
-        const profileImg = document.querySelector(".edit-profile-card img");
+        const profileImg = document.getElementById("profile-pic-preview");
         profileImg.src =
           userData.profilePicture ||
           "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png";
@@ -227,14 +239,25 @@
           });
 
         // Handle profile picture change
+        const profilePictureInput = document.getElementById(
+          "profile-picture-input"
+        );
         document
-          .querySelector(".edit-profile-card button")
+          .getElementById("change-profile-picture")
           .addEventListener("click", function () {
-            const newPicture = prompt("Enter URL of the new profile picture:");
-            if (newPicture) {
-              profileImg.src = newPicture;
-            }
+            profilePictureInput.click(); // Trigger file input click
           });
+
+        profilePictureInput.addEventListener("change", function () {
+          const file = this.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              profileImg.src = e.target.result; // Update the image preview
+            };
+            reader.readAsDataURL(file); // Read the file as a DataURL
+          }
+        });
       });
     </script>
   </body>

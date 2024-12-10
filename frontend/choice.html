@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Activity Tracker</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+
+    <style>
+      /* Basic Reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Space Mono", monospace;
+      }
+
+      body {
+        background-image: url("images/bg-image.jpg"),
+          linear-gradient(
+            45deg,
+            #b3cdd1 25%,
+            transparent 25%,
+            transparent 75%,
+            #b3cdd1 75%,
+            #b3cdd1
+          ),
+          linear-gradient(
+            45deg,
+            #b3cdd1 25%,
+            transparent 25%,
+            transparent 75%,
+            #b3cdd1 75%,
+            #b3cdd1
+          );
+        background-size: cover, 40px 40px, 40px 40px;
+        background-position: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      .action-card {
+        opacity: 85%;
+        text-align: center;
+        background-color: #f2fcfc;
+        width: 600px;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+
+      .action-card p {
+        font-size: 1.1rem;
+        color: #333;
+        margin-bottom: 25px;
+      }
+
+      .button-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .action-btn {
+        flex: 1;
+        padding: 15px;
+        font-size: 1.1rem;
+        color: #000;
+        background-color: #bdf1f6;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      .action-btn:hover {
+        background-color: #a7eaf0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="action-card">
+      <p>
+        You can create your own group and tell you friends or family to join, if
+        your friends or family already created a group you can join by asking
+        their groupcode.
+      </p>
+
+      <div class="button-container">
+        <button class="action-btn" @click="navigateTo('join.html')">
+          Join Group
+        </button>
+        <button class="action-btn" @click="navigateTo('create.html')">
+          Create Group
+        </button>
+      </div>
+    </div>
+
+    <script>
+      new Vue({
+        el: "#app",
+        methods: {
+          navigateTo(page) {
+            window.location.href = page; // Redirects to the given page
+          },
+        },
+      });
+    </script>
+  </body>
+</html>

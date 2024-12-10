@@ -247,5 +247,19 @@
         </div>
       </div>
     </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Fetch user data from localStorage
+        const userData = JSON.parse(localStorage.getItem("userData")) || {};
+    
+        const profileImg = document.querySelector(".left-card img");
+        const userName = document.querySelector(".left-card h2");
+    
+        profileImg.src = userData.profilePicture || 
+                         "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png";
+        userName.textContent = userData.name || "Nama User";
+      });
+    </script>
+    
   </body>
 </html>

@@ -136,6 +136,7 @@
       </p>
 
       <div class="input-container">
+        <!-- <form action="/register"> -->
         <i class="fas fa-user"></i>
         <input
           type="text"
@@ -143,9 +144,11 @@
           v-model="name"
           @input="clearError"
         />
+        <!-- </form> -->
       </div>
 
       <div class="input-container">
+        <!-- <form action="/register"> -->
         <i class="fas fa-envelope"></i>
         <input
           type="email"
@@ -153,9 +156,11 @@
           v-model="email"
           @input="clearError"
         />
+        <!-- </form> -->
       </div>
 
       <div class="input-container">
+        <!-- <form action="/register"> -->
         <i class="fas fa-lock"></i>
         <input
           type="password"
@@ -163,6 +168,7 @@
           v-model="password"
           @input="clearError"
         />
+        <!-- </form> -->
       </div>
 
       <button class="login-btn" @click="register">Register</button>
@@ -192,7 +198,8 @@
             }
 
             try {
-              const response = await fetch("http://localhost:3000/register", {
+              const response = await fetch("http://localhost:5000/register", {
+                // form action="/register"
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",

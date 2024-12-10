@@ -340,16 +340,7 @@
           const savedActivities = JSON.parse(
             localStorage.getItem("userNowActivities")
           );
-          if (savedActivities) {
-            this.users[1].activities = savedActivities;
-
-            // Ensure all activities default to "future" if not completed
-            this.users[1].activities.Today.forEach((activity) => {
-              if (!activity.status || activity.status !== "completed") {
-                activity.status = "future";
-              }
-            });
-          }
+          if (savedActivities) this.users[1].activities = savedActivities;
         },
       });
     </script>

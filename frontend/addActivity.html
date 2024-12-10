@@ -32,6 +32,58 @@
         background: url("images/bg-image.jpg") center center / cover no-repeat;
       }
 
+      body {
+        font-family: "Space Mono", monospace;
+        background-color: #e8f8ff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      .edit-profile-card {
+        width: 500px;
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      label {
+        display: block;
+        margin-top: 10px;
+        font-weight: bold;
+      }
+
+      input,
+      select,
+      button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+
+      select {
+        appearance: none;
+        background-color: white;
+      }
+
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
       /* Full-width container */
       .main-wrapper {
         width: 100%;
@@ -130,7 +182,11 @@
 
       <div>
         <label for="activityName">Activity Name</label>
-        <input type="text" id="activityName" placeholder="Enter your activity name" />
+        <input
+          type="text"
+          id="activityName"
+          placeholder="Enter your activity name"
+        />
       </div>
 
       <div>
@@ -140,7 +196,9 @@
 
       <div>
         <label for="category">Category</label>
-        <input type="text" id="category" placeholder="Enter a new or existing category" />
+        <select id="category">
+          <option value="" disabled selected>Select Category</option>
+        </select>
       </div>
 
       <div>
@@ -149,34 +207,66 @@
       </div>
 
       <div style="margin-top: 20px">
-        <button>Save Changes</button>
+        <button id="saveChanges">Save Changes</button>
       </div>
     </div>
 
     <script>
-      document.querySelector("button").addEventListener("click", function () {
-        const activityName = document.getElementById("activityName").value;
-        const deadline = document.getElementById("deadline").value;
-        const category = document.getElementById("category").value;
-        const note = document.getElementById("note").value;
+      function populateCategories() {
+        const categories = JSON.parse(localStorage.getItem("categories")) || [];
+        console.log("Categories from localStorage:", categories);
+        const categorySelect = document.getElementById("category");
+        categorySelect.innerHTML =
+          '<option value="" disabled selected>Select Category</option>';
 
-        const status = "future";
+        categories.forEach((category) => {
+          if (category && category.name) {
+            const option = document.createElement("option");
+            option.value = category.name;
+            option.textContent = category.name;
+            categorySelect.appendChild(option);
+          } else {
+            console.error("Invalid category format:", category); // Debugging log
+          }
+        });
+      }
+      document
+        .getElementById("saveChanges")
+        .addEventListener("click", function () {
+          const activityName = document.getElementById("activityName").value;
+          const deadline = document.getElementById("deadline").value;
+          const category = document.getElementById("category").value;
+          const note = document.getElementById("note").value;
 
-        let activities = JSON.parse(localStorage.getItem("userNowActivities")) || {};
+          if (!category) {
+            alert("Please select a category.");
+            return;
+          }
 
-        if (!activities[category]) activities[category] = [];
-        activities[category].push({
-          title: activityName,
-          date: deadline.split("T")[0],
-          time: deadline.split("T")[1],
-          note: note,
-          status: status,
+          const status = "future";
+
+          let activities =
+            JSON.parse(localStorage.getItem("userNowActivities")) || {};
+
+          if (!activities[category]) activities[category] = [];
+          activities[category].push({
+            title: activityName,
+            date: deadline.split("T")[0],
+            time: deadline.split("T")[1],
+            note: note,
+            status: status,
+          });
+
+          localStorage.setItem("userNowActivities", JSON.stringify(activities));
+
+          window.location.href = "main.html";
         });
 
-        localStorage.setItem("userNowActivities", JSON.stringify(activities));
-
-        window.location.href = "main.html";
+      window.addEventListener("storage", function () {
+        populateCategories();
       });
+
+      document.addEventListener("DOMContentLoaded", populateCategories);
     </script>
   </body>
 </html>

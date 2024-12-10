@@ -63,10 +63,14 @@ app.post("/login", async (req, res) => {
 });
 
 // Start the server
-const PORT = 5000;
+const PORT = 5500;
 
 app.get('/register',(req,res)=>{
   res.sendFile(path.join(__dirname, '/frontend/register.html'))
+})
+
+app.get('/login',(req,res)=>{
+  res.sendFile(path.join(__dirname, '/frontend/index.html'))
 })
 
 app.listen(PORT, () => {

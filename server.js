@@ -1,6 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const path = require('path')
+const path = require("path");
 const bcrypt = require("bcrypt");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -8,14 +8,14 @@ const cors = require("cors");
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
-app.use(express.urlencoded({extended:true}))
+app.use(express.urlencoded({ extended: true }));
 
 // Connect to MongoDB
-mongoose.connect("mongodb://127.0.0.1:27017/activityTracker")
-const db = mongoose.connection
-db.once('open',() => {
-  console.log("MongoDB connection successful")
-})
+mongoose.connect("mongodb://127.0.0.1:27017/activityTracker");
+const db = mongoose.connection;
+db.once("open", () => {
+  console.log("MongoDB connection successful");
+});
 
 // Define the User schema
 const userSchema = new mongoose.Schema({
@@ -38,7 +38,7 @@ app.post("/register", async (req, res) => {
     const newUser = new Users({ name, email, password: hashedPassword });
     await newUser.save();
     res.status(201).json({ message: "User registered successfully" });
-  } catch  (error) {
+  } catch (error) {
     res.status(400).json({ error: "Email already exists" });
   }
 });
@@ -65,13 +65,13 @@ app.post("/login", async (req, res) => {
 // Start the server
 const PORT = 5500;
 
-app.get('/register',(req,res)=>{
-  res.sendFile(path.join(__dirname, '/frontend/register.html'))
-})
+app.get("/register", (req, res) => {n 
+  res.sendFile(path.join(__dirname, "/frontend/register.html"));
+});
 
-app.get('/login',(req,res)=>{
-  res.sendFile(path.join(__dirname, '/frontend/index.html'))
-})
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "/frontend/index.html"));
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

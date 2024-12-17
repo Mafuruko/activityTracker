@@ -164,15 +164,35 @@
           errorMessage: "",
         },
         methods: {
-          joinGroup() {
+          async joinGroup() {
             // Simple form validation
             if (!this.groupCode) {
               this.errorMessage = "Group code is required.";
               return;
             }
-
-            // Simulate joining a group
-            alert(`Joining group with code: ${this.groupCode}`);
+    
+            try {
+              // Send request to the backend to join the group
+              const response = await fetch("/join", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ groupCode: this.groupCode }),
+              });
+    
+              if (!response.ok) {
+                const data = await response.json();
+                this.errorMessage = data.message || "Failed to join the group.";
+                return;
+              }
+    
+              // Redirect to main.html with /activities endpoint
+              window.location.href = "/activities";
+            } catch (error) {
+              console.error("Error joining group:", error);
+              this.errorMessage = "An unexpected error occurred. Please try again.";
+            }
           },
           clearError() {
             this.errorMessage = "";
@@ -180,5 +200,6 @@
         },
       });
     </script>
+    
   </body>
 </html>

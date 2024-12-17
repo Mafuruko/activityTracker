@@ -214,14 +214,14 @@
     <script>
       // Function to fetch categories from the backend and populate the select dropdown
       function populateCategories() {
-        fetch('/categories')  // Fetch categories from the backend
+        fetch("/categories") // Fetch categories from the backend
           .then((response) => response.json())
           .then((data) => {
             console.log("Categories from server:", data);
             const categorySelect = document.getElementById("category");
             categorySelect.innerHTML =
               '<option value="" disabled selected>Select Category</option>';
-    
+
             data.forEach((category) => {
               if (category && category.name) {
                 const option = document.createElement("option");
@@ -238,7 +238,7 @@
             alert("There was an error fetching categories.");
           });
       }
-    
+
       // Event listener to handle activity form submission
       document
         .getElementById("saveChanges")
@@ -247,17 +247,17 @@
           const deadline = document.getElementById("deadline").value;
           const category = document.getElementById("category").value;
           const note = document.getElementById("note").value;
-    
+
           if (!category) {
             alert("Please select a category.");
             return;
           }
-    
+
           // Send the activity data to the backend
-          fetch('/addAct', {
-            method: 'POST',
+          fetch("/addAct", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               activityName: activityName,
@@ -266,22 +266,21 @@
               note: note,
             }),
           })
-          .then(response => response.json())
-          .then(data => {
-            alert(data.message);  // Show success or error message
-            if (data.message === "Activity added successfully!") {
-              window.location.href = "/activities";  // Redirect after success
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            alert('There was an error adding the activity.');
-          });
+            .then((response) => response.json())
+            .then((data) => {
+              //  alert(data.message); // Show success or error message
+              if (data.message === "Activity added successfully!") {
+                window.location.href = "/activities"; // Redirect after success
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("There was an error adding the activity.");
+            });
         });
-    
+
       // Populate the categories when the page is loaded
       document.addEventListener("DOMContentLoaded", populateCategories);
     </script>
-    
   </body>
 </html>

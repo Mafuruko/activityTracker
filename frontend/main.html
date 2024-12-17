@@ -198,8 +198,107 @@
       <h1 style="font-size: 2rem; color: #000; margin-bottom: 20px">
         Group Name's Activity
       </h1>
-
       <div class="activity-container">
+        <div
+          class="activity-card"
+          v-for="(user, index) in groupedActivities"
+          :key="user.name"
+          :class="{ 'main-card': index === 1 }"
+        >
+          <img
+            src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
+            alt="User Avatar"
+            class="profile-image"
+          />
+          <h2>{{ user.name }}</h2>
+
+          <!-- Overdue Activities -->
+          <div v-if="user.grouped.overdue.length" class="activity-section">
+            <h3>Overdue</h3>
+            <div
+              v-for="activity in user.grouped.overdue"
+              :key="activity.title"
+              class="activity overdue"
+            >
+              <div class="activity-title">{{ activity.title }}</div>
+              <div class="activity-time">
+                <span>{{ activity.date }} - {{ activity.time }}</span>
+                <input
+                  type="checkbox"
+                  :checked="activity.status === 'completed'"
+                  :disabled="user.name !== 'User Now'"
+                  @change="toggleComplete(activity)"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Today's Activities -->
+          <div v-if="user.grouped.today.length" class="activity-section">
+            <h3>Today</h3>
+            <div
+              v-for="activity in user.grouped.today"
+              :key="activity.title"
+              class="activity today"
+            >
+              <div class="activity-title">{{ activity.title }}</div>
+              <div class="activity-time">
+                <span>{{ activity.date }} - {{ activity.time }}</span>
+                <input
+                  type="checkbox"
+                  :checked="activity.status === 'completed'"
+                  :disabled="user.name !== 'User Now'"
+                  @change="toggleComplete(activity)"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Future Activities -->
+          <div v-if="user.grouped.future.length" class="activity-section">
+            <h3>Future</h3>
+            <div
+              v-for="activity in user.grouped.future"
+              :key="activity.title"
+              class="activity future"
+            >
+              <div class="activity-title">{{ activity.title }}</div>
+              <div class="activity-time">
+                <span>{{ activity.date }} - {{ activity.time }}</span>
+                <input
+                  type="checkbox"
+                  :checked="activity.status === 'completed'"
+                  :disabled="user.name !== 'User Now'"
+                  @change="toggleComplete(activity)"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Completed Activities -->
+          <div v-if="user.grouped.completed.length" class="activity-section">
+            <h3>Completed</h3>
+            <div
+              v-for="activity in user.grouped.completed"
+              :key="activity.title"
+              class="activity completed"
+            >
+              <div class="activity-title">{{ activity.title }}</div>
+              <div class="activity-time">
+                <span>{{ activity.date }} - {{ activity.time }}</span>
+                <input
+                  type="checkbox"
+                  :checked="activity.status === 'completed'"
+                  :disabled="user.name !== 'User Now'"
+                  @change="toggleComplete(activity)"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- <div class="activity-container">
         <div
           class="activity-card"
           v-for="(user, index) in users"
@@ -236,9 +335,9 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
 
-        <!-- <div class="activity-card main-card">
+      <!-- <div class="activity-card main-card">
           <img
             src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
             alt="User Avatar"
@@ -269,9 +368,10 @@
             </div>
           </div>
         </div> -->
-      </div>
+      <!-- </div> -->
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
     <script>
       new Vue({
         el: "#app",
@@ -279,82 +379,96 @@
           users: [
             {
               name: "Nama User 1",
-              activities: {
-                Today: [
-                  {
-                    title: "Wake up",
-                    date: "2024-12-10",
-                    time: "08:00",
-                    status: "today",
-                  },
-                ],
-              },
+              activities: [
+                {
+                  title: "Wake up",
+                  date: "2024-06-17",
+                  time: "08:00",
+                  status: "future",
+                },
+              ],
             },
             {
               name: "User Now",
-              activities: {
-                Today: [],
-              },
+              activities: [],
             },
             {
               name: "Nama User 2",
-              activities: {
-                Today: [
-                  {
-                    title: "Meeting",
-                    date: "2024-12-05",
-                    time: "10:00",
-                    status: "overdue",
-                  },
-                  {
-                    title: "Lunch",
-                    date: "2024-12-13",
-                    time: "12:30",
-                    status: "future",
-                  },
-                ],
-              },
+              activities: [
+                {
+                  title: "Meeting",
+                  date: "2024-06-10",
+                  time: "10:00",
+                  status: "future",
+                },
+                {
+                  title: "Lunch",
+                  date: "2024-06-20",
+                  time: "12:30",
+                  status: "future",
+                },
+              ],
             },
           ],
           newActivity: { title: "", date: "", time: "", status: "future" },
         },
-        methods: {
-          categorizeActivities(activityDate) {
-            const today = new Date().setHours(0, 0, 0, 0); // Start of today
-            const activityDateTime = new Date(activityDate).setHours(
-              0,
-              0,
-              0,
-              0
-            );
+        computed: {
+          // Compute activities grouped into overdue, today, future, completed
+          groupedActivities() {
+            const today = new Date().setHours(0, 0, 0, 0);
 
-            if (activityDateTime < today) {
-              return "Overdue";
-            } else if (activityDateTime === today) {
-              return "Today";
-            } else {
-              return "Future";
-            }
+            return this.users.map((user) => {
+              // Flatten activities object into an array
+              const allActivities = Object.values(user.activities).flat();
+
+              const activities = {
+                overdue: [],
+                today: [],
+                future: [],
+                completed: [],
+              };
+
+              allActivities.forEach((activity) => {
+                const activityDate = new Date(activity.date).setHours(
+                  0,
+                  0,
+                  0,
+                  0
+                );
+
+                if (activity.status === "completed") {
+                  activities.completed.push(activity);
+                } else if (activityDate < today) {
+                  activities.overdue.push(activity);
+                } else if (activityDate === today) {
+                  activities.today.push(activity);
+                } else {
+                  activities.future.push(activity);
+                }
+              });
+
+              return { ...user, grouped: activities };
+            });
           },
+        },
+        methods: {
           addActivity() {
-            const newActivity = {
-              title: prompt("Enter activity title:"),
-              date: prompt("Enter date (YYYY-MM-DD):"),
-              time: prompt("Enter time (HH:mm):"),
-              status: "future",
-            };
-            this.users[1].activities.Today.push(newActivity);
-            localStorage.setItem(
-              "userNowActivities",
-              JSON.stringify(this.users[1].activities)
-            );
+            const title = prompt("Enter activity title:");
+            const date = prompt("Enter date (YYYY-MM-DD):");
+            const time = prompt("Enter time (HH:mm):");
+
+            if (title && date && time) {
+              const newActivity = { title, date, time, status: "future" };
+              this.users[1].activities.push(newActivity);
+              localStorage.setItem(
+                "userNowActivities",
+                JSON.stringify(this.users[1].activities)
+              );
+            }
           },
           toggleComplete(activity) {
-            if (activity.status === "completed") {
-              activity.status = "future";
-            } else {
-              activity.status = "completed";
-            }
+            activity.status =
+              activity.status === "completed" ? "future" : "completed";
             localStorage.setItem(
               "userNowActivities",
               JSON.stringify(this.users[1].activities)

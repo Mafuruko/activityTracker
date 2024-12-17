@@ -214,19 +214,26 @@
     <script>
       // Function to fetch categories from the backend and populate the select dropdown
       function populateCategories() {
-        fetch("/categories") // Fetch categories from the backend
-          .then((response) => response.json())
+        fetch("/categories") // Fetch categories from the server
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+          })
           .then((data) => {
-            console.log("Categories from server:", data);
+            console.log("Categories fetched:", data);
             const categorySelect = document.getElementById("category");
             categorySelect.innerHTML =
               '<option value="" disabled selected>Select Category</option>';
 
+            // Populate the dropdown with fetched categories
             data.forEach((category) => {
-              if (category && category.name) {
+              if (category && category.name && category.color) {
                 const option = document.createElement("option");
-                option.value = category.name;
-                option.textContent = category.name;
+                option.value = category.name; // Set the category name as the value
+                option.textContent = category.name; // Display the category name
+                option.style.backgroundColor = category.color; // Add category color as background
                 categorySelect.appendChild(option);
               } else {
                 console.error("Invalid category format:", category);
@@ -235,52 +242,54 @@
           })
           .catch((error) => {
             console.error("Error fetching categories:", error);
-            alert("There was an error fetching categories.");
+            alert("Unable to fetch categories. Please try again later.");
           });
       }
 
-      // Event listener to handle activity form submission
-      document
-        .getElementById("saveChanges")
-        .addEventListener("click", function () {
-          const activityName = document.getElementById("activityName").value;
-          const deadline = document.getElementById("deadline").value;
-          const category = document.getElementById("category").value;
-          const note = document.getElementById("note").value;
-
-          if (!category) {
-            alert("Please select a category.");
-            return;
-          }
-
-          // Send the activity data to the backend
-          fetch("/addAct", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              activityName: activityName,
-              deadline: deadline,
-              category: category,
-              note: note,
-            }),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              //  alert(data.message); // Show success or error message
-              if (data.message === "Activity added successfully!") {
-                window.location.href = "/activities"; // Redirect after success
-              }
-            })
-            .catch((error) => {
-              console.error("Error:", error);
-              alert("There was an error adding the activity.");
-            });
-        });
-
-      // Populate the categories when the page is loaded
+      // Populate categories when the page loads
       document.addEventListener("DOMContentLoaded", populateCategories);
-    </script>
+
+      // Add event listener for saving activity
+      document.getElementById("saveChanges").addEventListener("click", () => {
+        const activityName = document.getElementById("activityName").value.trim();
+        const deadline = document.getElementById("deadline").value;
+        const category = document.getElementById("category").value;
+        const note = document.getElementById("note").value.trim();
+
+        if (!activityName || !deadline || !category) {
+          alert("Please fill in all required fields.");
+          return;
+        }
+
+        const activityData = {
+          activityName,
+          deadline,
+          category,
+          note,
+        };
+
+        fetch("/addAct", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(activityData),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            alert(data.message || "Activity added successfully!");
+            // Optionally, redirect or clear the form
+          })
+          .catch((error) => {
+            console.error("Error saving activity:", error);
+            alert("Unable to save the activity. Please try again.");
+          });
+      });
+    </script>    
   </body>
 </html>

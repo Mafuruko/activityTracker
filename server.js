@@ -45,7 +45,22 @@ const groupSchema = new mongoose.Schema({
   },
 });
 
-const Groups = mongoose.model("Group", groupSchema);
+const Groups = mongoose.model("group", groupSchema);
+
+// API endpoint to get only the group name
+app.get("/api/group", async (req, res) => {
+  try {
+    const group = await Groups.findOne(); // Modify query as per your schema
+    if (group) {
+      res.json({ groupName: group.name });
+    } else {
+      res.status(404).json({ message: "Group not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching group:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -209,36 +224,16 @@ app.post("/join", async (req, res) => {
 });
 
 
-
-app.post("/activities", async (req, res) => {
-  const { activityName, deadline, category, note } = req.body;
-
-  // Check if the required fields are present
-  if (!activityName || !deadline || !category) {
-    return res.status(400).json({ message: "Activity name, deadline, and category are required." });
-  }
-
+app.get("/activity", async (req, res) => {
   try {
-    // Create a new activity object with the received data
-    const activity = new Activities({
-      activityName,
-      deadline,
-      category,
-      note,
-    });
-
-    // Save the activity to the database
-    const newActivity = new Activity({ name: groupCode });
-    await newGroup.save();
-
-    // Return a success response
-    res.status(201).json({ message: "Activity added successfully", activity });
+    // Fetch activities from the database (customize query as needed)
+    const activities = await Activity.find(); // Optionally, add filters here
+    res.status(200).json(activities);
   } catch (error) {
-    console.error("Error saving activity:", error);
-    res.status(500).json({ message: "Failed to add activity." });
+    console.error("Error fetching activities:", error);
+    res.status(500).json({ message: "Failed to fetch activities." });
   }
 });
-
 
 app.get("/choice", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "choice.html"));
@@ -289,30 +284,34 @@ app.get("/addAct", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "addActivity.html"));
 });
 
-app.post('/addAct', (req, res) => {
-  const { activityName, deadline, category, note } = req.body;
+app.post("/addAct", async (req, res) => {
+  try {
+    const { activityName, deadline, category, note } = req.body;
 
-  if (!activityName || !deadline || !category) {
-    return res.status(400).json({ message: "Activity Name, Deadline, and Category are required!" });
+    // Validate required fields
+    if (!activityName || !deadline || !category) {
+      return res.status(400).json({ message: "Please fill in all required fields." });
+    }
+
+    // Create a new activity instance
+    const newActivity = new Activity({
+      activityName,
+      deadline,
+      category,
+      note,
+    });
+
+    // Save the activity to the database
+    const savedActivity = await newActivity.save();
+
+    res.status(201).json({
+      message: "Activity added successfully!",
+      activity: savedActivity,
+    });
+  } catch (error) {
+    console.error("Error adding activity:", error);
+    res.status(500).json({ message: "An error occurred while adding the activity." });
   }
-
-  // Check if there is a stored activities object in local storage (just for demonstration)
-  // let activities = JSON.parse(localStorage.getItem('userNowActivities')) || {};
-
-  // Add new activity under the selected category
-  if (!activities[category]) activities[category] = [];
-  activities[category].push({
-    title: activityName,
-    date: deadline.split('T')[0],
-    time: deadline.split('T')[1],
-    note: note || '', // If no note, it will be an empty string
-    status: "future",
-  });
-
-  // Store updated activities (you can store it in a database instead of localStorage)
-  localStorage.setItem('userNowActivities', JSON.stringify(activities));
-
-  res.status(200).json({ message: "Activity added successfully!" });
 });
 
 app.get("/addCat", (req, res) => {

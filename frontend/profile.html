@@ -185,7 +185,9 @@
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
               "
             >
-              <strong style="font-size: 1.5rem; color: #000">13</strong>
+              <strong style="font-size: 1.5rem; color: #000"
+                >{{ completedTasks }}</strong
+              >
               <span style="font-size: 0.9rem; color: #666">Completed Task</span>
             </div>
             <div
@@ -201,7 +203,9 @@
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
               "
             >
-              <strong style="font-size: 1.5rem; color: #000">7</strong>
+              <strong style="font-size: 1.5rem; color: #000"
+                >{{ pendingTasks }}</strong
+              >
               <span style="font-size: 0.9rem; color: #666">Pending Task</span>
             </div>
           </div>
@@ -248,18 +252,53 @@
       </div>
     </div>
     <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        // Fetch user data from localStorage
-        const userData = JSON.parse(localStorage.getItem("userData")) || {};
-    
-        const profileImg = document.querySelector(".left-card img");
-        const userName = document.querySelector(".left-card h2");
-    
-        profileImg.src = userData.profilePicture || 
-                         "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png";
-        userName.textContent = userData.name || "Nama User";
+      new Vue({
+        el: "#app",
+        data: {
+          activities: Array.isArray(
+            JSON.parse(localStorage.getItem("userNowActivities"))
+          )
+            ? JSON.parse(localStorage.getItem("userNowActivities"))
+            : [],
+          userData: JSON.parse(localStorage.getItem("userData")) || {
+            name: "Nama User",
+            profilePicture:
+              "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png",
+          },
+        },
+        computed: {
+          completedTasks() {
+            // Safely check and count activities with status "completed"
+            return this.activities.filter(
+              (activity) =>
+                activity.status && activity.status.toLowerCase() === "completed"
+            ).length;
+          },
+          pendingTasks() {
+            // Count activities not marked as "completed"
+            return this.activities.filter(
+              (activity) =>
+                !activity.status ||
+                activity.status.toLowerCase() !== "completed"
+            ).length;
+          },
+        },
+
+        mounted() {
+          console.log("User Activities Loaded:", this.activities); // Debugging line
+          console.log("User Data Loaded:", this.userData); // Debugging line
+
+          // Fetch and set user data from localStorage
+          const userData = JSON.parse(localStorage.getItem("userData")) || {};
+          const profileImg = document.querySelector(".left-card img");
+          const userName = document.querySelector(".left-card h2");
+
+          profileImg.src =
+            userData.profilePicture ||
+            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png";
+          userName.textContent = userData.name || "Nama User";
+        },
       });
     </script>
-    
   </body>
 </html>

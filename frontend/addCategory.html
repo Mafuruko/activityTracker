@@ -78,14 +78,13 @@
         appearance: none;
         -webkit-appearance: none;
         border: none;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        overflow: hidden;
+        width: 100%; /* Make it fill the container */
+        height: 50px; /* Adjust height to match form elements */
         cursor: pointer;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         margin: 10px 0;
         padding: 0;
+        border-radius: 5px; /* Rectangle shape with slightly rounded corners */
       }
 
       .right-card input[type="color"]::-webkit-color-swatch-wrapper {
@@ -94,7 +93,7 @@
 
       .right-card input[type="color"]::-webkit-color-swatch {
         border: none;
-        border-radius: 50%;
+        border-radius: 0; /* Remove any circular styles */
       }
 
       /* Centered Edit Profile Card */
@@ -258,7 +257,9 @@
               <label for="categoryColor">Category Color</label>
               <input type="color" id="categoryColor" />
             </div>
-            <div style="margin-top: 20px"><button id="addCategoryBtn">Add Category</button></div>
+            <div style="margin-top: 20px">
+              <button id="addCategoryBtn">Add Category</button>
+            </div>
           </div>
         </div>
       </div>
@@ -290,62 +291,65 @@
       }
 
       // Add a new category
-      document.getElementById("addCategoryBtn").addEventListener("click", function () {
-        const categoryName = document.getElementById("categoryName").value.trim();
-        const categoryColor = document.getElementById("categoryColor").value;
+      document
+        .getElementById("addCategoryBtn")
+        .addEventListener("click", function () {
+          const categoryName = document
+            .getElementById("categoryName")
+            .value.trim();
+          const categoryColor = document.getElementById("categoryColor").value;
 
-        if (categoryName) {
-      // Send data to server using fetch API
-      fetch("/addCat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: `categoryName=${categoryName}&categoryColor=${categoryColor}`,
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.message) {
-            alert(data.message);
-            renderCategories(); // Update the categories list
-            document.getElementById("categoryName").value = ""; // Clear the input
+          if (categoryName) {
+            // Send data to server using fetch API
+            fetch("/addCat", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: `categoryName=${categoryName}&categoryColor=${categoryColor}`,
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.message) {
+                  alert(data.message);
+                  renderCategories(); // Update the categories list
+                  document.getElementById("categoryName").value = ""; // Clear the input
+                }
+              })
+              .catch((error) => {
+                console.error("Error adding category:", error);
+              });
+          } else {
+            alert("Please enter a category name!");
           }
-        })
-        .catch((error) => {
-          console.error("Error adding category:", error);
         });
-    } else {
-      alert("Please enter a category name!");
-    }
-
-      });
 
       function renderCategories() {
-    fetch('/categories')
-      .then((response) => response.json())
-      .then((categories) => {
-        const categoriesList = document.getElementById("categoriesList");
-        categoriesList.innerHTML = ""; // Clear the current list
+        fetch("/categories")
+          .then((response) => response.json())
+          .then((categories) => {
+            const categoriesList = document.getElementById("categoriesList");
+            categoriesList.innerHTML = ""; // Clear the current list
 
-        categories.forEach((category, index) => {
-          const categoryItem = document.createElement("div");
-          categoryItem.className = "category-item";
-          categoryItem.innerHTML = `
+            categories.forEach((category, index) => {
+              const categoryItem = document.createElement("div");
+              categoryItem.className = "category-item";
+              categoryItem.innerHTML = `
             <span style="color: ${category.color}; font-weight: bold">${category.name}</span>
             <i class="fas fa-times delete-icon" data-index="${index}"></i>
           `;
-          categoriesList.appendChild(categoryItem);
-        });
+              categoriesList.appendChild(categoryItem);
+            });
 
-        // Attach event listeners for delete icons
-        document.querySelectorAll(".delete-icon").forEach((icon) => {
-          icon.addEventListener("click", function () {
-            const index = this.getAttribute("data-index");
-            deleteCategory(index);
+            // Attach event listeners for delete icons
+            document.querySelectorAll(".delete-icon").forEach((icon) => {
+              icon.addEventListener("click", function () {
+                const index = this.getAttribute("data-index");
+                deleteCategory(index);
+              });
+            });
           });
-        });
-      });
-  }
+      }
 
       // Delete a category
       function deleteCategory(index) {

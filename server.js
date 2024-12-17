@@ -37,7 +37,7 @@ const groupSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "user",
-    required: true,
+    // required: true,
   },
   createdAt: {
     type: Date,
@@ -47,7 +47,6 @@ const groupSchema = new mongoose.Schema({
 
 const Groups = mongoose.model("Group", groupSchema);
 
-// Define the User schema
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -55,6 +54,46 @@ const userSchema = new mongoose.Schema({
 });
 
 const Users = mongoose.model("user", userSchema);
+
+const activitySchema = new mongoose.Schema({
+  activityName: {
+    type: String,
+    required: true,
+    trim: true,  // Ensures no extra spaces are saved
+  },
+  deadline: {
+    type: Date,
+    required: true,  // Ensures the deadline is provided
+  },
+  category: {
+    type: String,
+    required: true,  // Ensures category is selected
+    trim: true,  // Removes unnecessary whitespace
+  },
+  note: {
+    type: String,
+    trim: true,  // Removes unnecessary whitespace
+    default: "",  // Optional field, default to empty string if not provided
+  },
+});
+
+// Create the Activity model
+const Activity = mongoose.model("Activity", activitySchema);
+
+const categorySchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+  color: {
+    type: String,
+    required: true,
+  },
+});
+
+const Category = mongoose.model('Category', categorySchema);
 
 // Serve the `register.html` file for the `/register` route
 app.get("/register", (req, res) => {
@@ -90,78 +129,242 @@ app.get("/index", (req, res) => {
 app.post("/index", async (req, res) => {
   const { email, password } = req.body;
 
-  // Basic validation
   if (!email || !password) {
     return res.status(400).json({ message: "All fields are required." });
   }
 
   try {
-    // Check if the user exists in the database
     const user = await Users.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials." });
     }
 
-    // Compare the password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials." });
     }
 
-    // Success
     res.status(200).json({ message: "Login successful", user: user.name });
   } catch (error) {
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 });
 
-app.get("/choice", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "choice.html"));
-});
-
-// Serve join.html for "Join Group" action
-app.get("/join", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "join.html"));
-});
-
-// Serve create.html for "Create Group" action
-app.get("/create", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "create.html"));
-});
-
 app.post("/create", async (req, res) => {
-  const { groupName, createdBy } = req.body;
+  const { groupCode } = req.body;
 
-  // Validate inputs
-  if (!groupName || !createdBy) {
-    return res.status(400).json({ message: "Group name and creator are required." });
+  // Validate input
+  if (!groupCode) {
+    return res.status(400).json({ message: "Group name is required." });
   }
 
   try {
-    // Check if the group name already exists
-    const existingGroup = await Groups.findOne({ name: groupName });
+    // Check if a group with the same name already exists
+    const existingGroup = await Groups.findOne({ name: groupCode });
     if (existingGroup) {
-      return res.status(400).json({ message: "Group name is already taken." });
+      return res.status(400).json({ message: "Group name already exists." });
     }
 
-    // Create and save the group
-    const group = new Group({
-      name: groupName,
-      createdBy,
-      members: [createdBy], // Add the creator as the first member
-    });
+    // Create new group
+    const newGroup = new Groups({ name: groupCode });
+    await newGroup.save();
 
-    await group.save();
-
-    res.status(201).json({ message: "Group created successfully", group });
+    res.status(201).json({ message: "Group created successfully.", group: newGroup });
   } catch (error) {
     console.error("Error creating group:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 });
 
+// Join Group Endpoint
+app.post("/join", async (req, res) => {
+  const { groupCode } = req.body;
 
-// Start the server
+  // Validate inputs
+  if (!groupCode) {
+    return res.status(400).json({ message: "Group code are required." });
+  }
+
+  try {
+    // Find the group by the provided code
+    const group = await Groups.findOne({ name: groupCode });
+    if (!group) {
+      return res.status(404).json({ message: "Group not found." });
+    }
+
+    // Check if the user is already a member of the group
+    // if (group.members.includes(userId)) {
+    //   return res.status(400).json({ message: "User is already a member of this group." });
+    // }
+
+    // Add the user to the group members
+    // group.members.push(userId);
+    // await group.save();
+
+    res.status(200).json({ message: "Successfully joined the group." });
+  } catch (error) {
+    console.error("Error joining group:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+
+
+app.post("/activities", async (req, res) => {
+  const { activityName, deadline, category, note } = req.body;
+
+  // Check if the required fields are present
+  if (!activityName || !deadline || !category) {
+    return res.status(400).json({ message: "Activity name, deadline, and category are required." });
+  }
+
+  try {
+    // Create a new activity object with the received data
+    const activity = new Activities({
+      activityName,
+      deadline,
+      category,
+      note,
+    });
+
+    // Save the activity to the database
+    const newActivity = new Activity({ name: groupCode });
+    await newGroup.save();
+
+    // Return a success response
+    res.status(201).json({ message: "Activity added successfully", activity });
+  } catch (error) {
+    console.error("Error saving activity:", error);
+    res.status(500).json({ message: "Failed to add activity." });
+  }
+});
+
+
+app.get("/choice", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "choice.html"));
+});
+
+app.get("/join", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "join.html"));
+});
+
+app.get("/create", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "create.html"));
+});
+
+app.post("/create", async (req, res) => {
+  const { groupName} = req.body;
+
+  if (!groupName) {
+    return res.status(400).json({ message: "Group name are required." });
+  }
+
+  try {
+    const existingGroup = await Groups.findOne({ name: groupName });
+    if (existingGroup) {
+      return res.status(400).json({ message: "Group name is already taken." });
+    }
+
+    const group = new Groups({
+      name: groupName,
+    });
+
+    await group.save();
+
+    res.status(201).json({ message: "Group created successfully", group });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+app.get("/activities", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "main.html"));
+});
+
+app.get("/profile", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "profile.html"));
+});
+
+app.get("/addAct", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "addActivity.html"));
+});
+
+app.post('/addAct', (req, res) => {
+  const { activityName, deadline, category, note } = req.body;
+
+  if (!activityName || !deadline || !category) {
+    return res.status(400).json({ message: "Activity Name, Deadline, and Category are required!" });
+  }
+
+  // Check if there is a stored activities object in local storage (just for demonstration)
+  // let activities = JSON.parse(localStorage.getItem('userNowActivities')) || {};
+
+  // Add new activity under the selected category
+  if (!activities[category]) activities[category] = [];
+  activities[category].push({
+    title: activityName,
+    date: deadline.split('T')[0],
+    time: deadline.split('T')[1],
+    note: note || '', // If no note, it will be an empty string
+    status: "future",
+  });
+
+  // Store updated activities (you can store it in a database instead of localStorage)
+  localStorage.setItem('userNowActivities', JSON.stringify(activities));
+
+  res.status(200).json({ message: "Activity added successfully!" });
+});
+
+app.get("/addCat", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "addCategory.html"));
+});
+
+// let categories = [];
+
+// Endpoint to add category
+// Endpoint to add category
+app.post('/addCat', async (req, res) => {
+  const { categoryName, categoryColor } = req.body;
+
+  if (!categoryName || !categoryColor) {
+    return res.status(400).json({ message: 'Category name and color are required' });
+  }
+
+  try {
+    // Check if category already exists
+    const existingCategory = await Category.findOne({ name: categoryName });
+    if (existingCategory) {
+      return res.status(400).json({ message: 'Category already exists' });
+    }
+
+    const newCategory = new Category({
+      name: categoryName,
+      color: categoryColor,
+    });
+
+    await newCategory.save();
+    res.status(201).json({ message: 'Category added successfully', category: newCategory });
+  } catch (error) {
+    console.error('Error adding category:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+// Endpoint to retrieve categories
+// Endpoint to retrieve categories
+app.get('/categories', async (req, res) => {
+  try {
+    const categories = await Category.find();
+    res.json(categories);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+
 const PORT = 5500;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

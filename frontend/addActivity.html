@@ -174,7 +174,7 @@
   </head>
   <body>
     <div class="navbar">
-      <a href="main.html"> <i class="fa-solid fa-arrow-left"></i></a>
+      <a href="/activities"> <i class="fa-solid fa-arrow-left"></i></a>
     </div>
 
     <div class="edit-profile-card">
@@ -212,24 +212,34 @@
     </div>
 
     <script>
+      // Function to fetch categories from the backend and populate the select dropdown
       function populateCategories() {
-        const categories = JSON.parse(localStorage.getItem("categories")) || [];
-        console.log("Categories from localStorage:", categories);
-        const categorySelect = document.getElementById("category");
-        categorySelect.innerHTML =
-          '<option value="" disabled selected>Select Category</option>';
-
-        categories.forEach((category) => {
-          if (category && category.name) {
-            const option = document.createElement("option");
-            option.value = category.name;
-            option.textContent = category.name;
-            categorySelect.appendChild(option);
-          } else {
-            console.error("Invalid category format:", category); // Debugging log
-          }
-        });
+        fetch('/categories')  // Fetch categories from the backend
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Categories from server:", data);
+            const categorySelect = document.getElementById("category");
+            categorySelect.innerHTML =
+              '<option value="" disabled selected>Select Category</option>';
+    
+            data.forEach((category) => {
+              if (category && category.name) {
+                const option = document.createElement("option");
+                option.value = category.name;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+              } else {
+                console.error("Invalid category format:", category);
+              }
+            });
+          })
+          .catch((error) => {
+            console.error("Error fetching categories:", error);
+            alert("There was an error fetching categories.");
+          });
       }
+    
+      // Event listener to handle activity form submission
       document
         .getElementById("saveChanges")
         .addEventListener("click", function () {
@@ -237,36 +247,41 @@
           const deadline = document.getElementById("deadline").value;
           const category = document.getElementById("category").value;
           const note = document.getElementById("note").value;
-
+    
           if (!category) {
             alert("Please select a category.");
             return;
           }
-
-          const status = "future";
-
-          let activities =
-            JSON.parse(localStorage.getItem("userNowActivities")) || {};
-
-          if (!activities[category]) activities[category] = [];
-          activities[category].push({
-            title: activityName,
-            date: deadline.split("T")[0],
-            time: deadline.split("T")[1],
-            note: note,
-            status: status,
+    
+          // Send the activity data to the backend
+          fetch('/addAct', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              activityName: activityName,
+              deadline: deadline,
+              category: category,
+              note: note,
+            }),
+          })
+          .then(response => response.json())
+          .then(data => {
+            alert(data.message);  // Show success or error message
+            if (data.message === "Activity added successfully!") {
+              window.location.href = "/activities";  // Redirect after success
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('There was an error adding the activity.');
           });
-
-          localStorage.setItem("userNowActivities", JSON.stringify(activities));
-
-          window.location.href = "main.html";
         });
-
-      window.addEventListener("storage", function () {
-        populateCategories();
-      });
-
+    
+      // Populate the categories when the page is loaded
       document.addEventListener("DOMContentLoaded", populateCategories);
     </script>
+    
   </body>
 </html>

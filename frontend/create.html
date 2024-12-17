@@ -164,20 +164,43 @@
           errorMessage: "",
         },
         methods: {
-          joinGroup() {
-            // Simple form validation
-            if (!this.groupCode) {
-              this.errorMessage = "Group code is required.";
-              return;
-            }
+  async joinGroup() {
+    // Simple form validation
+    if (!this.groupCode) {
+      this.errorMessage = "Group name is required.";
+      return;
+    }
 
-            // Simulate joining a group
-            alert(`Group Name is : ${this.groupCode}`);
-          },
-          clearError() {
-            this.errorMessage = "";
-          },
+    try {
+      // Send request to the backend to create the group
+      const response = await fetch("/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ groupCode: this.groupCode }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        this.errorMessage = data.message || "Failed to create the group.";
+        return;
+      }
+
+      // Notify success and redirect to another page if needed
+      alert(data.message);
+      window.location.href = "/activities"; // Redirect after creation
+    } catch (error) {
+      console.error("Error creating group:", error);
+      this.errorMessage = "An unexpected error occurred. Please try again.";
+    }
+  },
+  clearError() {
+    this.errorMessage = "";
+  },
+},
+
       });
     </script>
   </body>

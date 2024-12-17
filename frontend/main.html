@@ -501,15 +501,37 @@
               );
             }
           },
-          toggleComplete(activity) {
-            activity.status =
-              activity.status === "completed" ? "future" : "completed";
-            localStorage.setItem(
-              "userNowActivities",
-              JSON.stringify(this.users[1].activities)
-            );
-          },
-          
+          async toggleComplete(activity) {
+            try {
+              // Toggle the local status
+              activity.status =
+                activity.status === "completed" ? "future" : "completed";
+
+              // Save to the server
+              const response = await fetch(`/activity/${activity._id}`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ status: activity.status }),
+              });
+
+              if (!response.ok) {
+                throw new Error("Failed to update activity on the server");
+              }
+
+              const updatedActivity = await response.json();
+              console.log("Activity updated:", updatedActivity);
+
+              // Save to localStorage for persistence (optional)
+              localStorage.setItem(
+                "userNowActivities",
+                JSON.stringify(this.users[1].activities)
+              );
+            } catch (error) {
+              console.error("Error updating activity status:", error);
+            }
+          },          
         },
         mounted() {
           const savedActivities = JSON.parse(

@@ -235,6 +235,30 @@ app.get("/activity", async (req, res) => {
   }
 });
 
+app.put("/activity/:_id", async (req, res) => {
+  try {
+    const { _id } = req.params;
+    const { status } = req.body;
+
+    // Update activity status in the database
+    const updatedActivity = await Activity.findByIdAndUpdate(
+      _id,
+      { status },
+      { new: true }
+    );
+
+    if (!updatedActivity) {
+      return res.status(404).json({ message: "Activity not found" });
+    }
+
+    res.status(200).json(updatedActivity);
+  } catch (error) {
+    console.error("Error updating activity status:", error);
+    res.status(500).json({ message: "Failed to update activity status." });
+  }
+});
+
+
 app.get("/choice", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "choice.html"));
 });
@@ -349,6 +373,72 @@ app.post('/addCat', async (req, res) => {
   }
 });
 
+const MemberProfileSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    profilePicture: {
+      type: String,
+      default: '', // URL to the profile picture
+    },
+  },
+  {
+    collection: 'profiles', // Explicitly set the collection name
+  }
+);
+
+const memberProfileSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  profilePicture: { type: String },
+  password: { type: String },
+});
+
+const MemberProfile = mongoose.model("MemberProfile", memberProfileSchema);
+
+app.post('/editProfile', async (req, res) => {
+  try {
+    const { name, email, profilePicture, password } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required!' });
+    }
+
+    // Check if the member profile already exists
+    let member = await MemberProfile.findOne({ email });
+
+    if (member) {
+      // Update existing profile
+      member.name = name;
+      member.profilePicture = profilePicture || member.profilePicture;
+      if (password) {
+        member.password = password; // Update password if provided
+      }
+    } else {
+      // Create a new profile
+      member = new MemberProfile({ name, email, profilePicture, password });
+    }
+
+    // Save to the database
+    await member.save();
+
+    res.status(200).json({ message: 'Profile saved successfully!', member });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 
 // Endpoint to retrieve categories
 // Endpoint to retrieve categories
@@ -362,7 +452,9 @@ app.get('/categories', async (req, res) => {
   }
 });
 
-
+app.get("/editProfile", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "editprofile.html"));
+});
 
 const PORT = 5500;
 app.listen(PORT, () => {

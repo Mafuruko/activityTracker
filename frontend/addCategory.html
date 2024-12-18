@@ -311,7 +311,6 @@
               .then((response) => response.json())
               .then((data) => {
                 if (data.message) {
-                  alert(data.message);
                   renderCategories(); // Update the categories list
                   document.getElementById("categoryName").value = ""; // Clear the input
                 }

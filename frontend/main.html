@@ -454,39 +454,39 @@
         },
         methods: {
           async fetchGroupName() {
-        try {
-          const response = await fetch("/api/group", {
-            method: "GET",
-          });
-          const data = await response.json();
-          if (response.ok) {
-            this.groupName = data.groupName; // Set the group name
-          } else {
-            console.error("Error fetching group name:", data.message);
-          }
-        } catch (error) {
-          console.error("Unexpected error fetching group name:", error);
-        }
-      },
+            try {
+              const response = await fetch("/api/group", {
+                method: "GET",
+              });
+              const data = await response.json();
+              if (response.ok) {
+                this.groupName = data.groupName; // Set the group name
+              } else {
+                console.error("Error fetching group name:", data.message);
+              }
+            } catch (error) {
+              console.error("Unexpected error fetching group name:", error);
+            }
+          },
 
-      async fetchActivities() {
-    try {
-      const response = await fetch("/activity");
-      const data = await response.json();
-      if (response.ok) {
-        this.users[1].activities = data.map((activity) => ({
-          title: activity.activityName,
-          date: activity.deadline.split("T")[0],
-          time: activity.deadline.split("T")[1]?.slice(0, 5) || "00:00",
-          status: "future",
-        }));
-      } else {
-        console.error("Error fetching activities:", data.message);
-      }
-    } catch (error) {
-      console.error("Unexpected error fetching activities:", error);
-    }
-  },
+          async fetchActivities() {
+            try {
+              const response = await fetch("/activity");
+              const data = await response.json();
+              if (response.ok) {
+                this.users[1].activities = data.map((activity) => ({
+                  title: activity.activityName,
+                  date: activity.deadline.split("T")[0],
+                  time: activity.deadline.split("T")[1]?.slice(0, 5) || "00:00",
+                  status: "future",
+                }));
+              } else {
+                console.error("Error fetching activities:", data.message);
+              }
+            } catch (error) {
+              console.error("Unexpected error fetching activities:", error);
+            }
+          },
           addActivity() {
             const title = prompt("Enter activity title:");
             const date = prompt("Enter date (YYYY-MM-DD):");
@@ -501,37 +501,15 @@
               );
             }
           },
-          async toggleComplete(activity) {
-            try {
-              // Toggle the local status
-              activity.status =
-                activity.status === "completed" ? "future" : "completed";
-
-              // Save to the server
-              const response = await fetch(`/activity/${activity._id}`, {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ status: activity.status }),
-              });
-
-              if (!response.ok) {
-                throw new Error("Failed to update activity on the server");
-              }
-
-              const updatedActivity = await response.json();
-              console.log("Activity updated:", updatedActivity);
-
-              // Save to localStorage for persistence (optional)
-              localStorage.setItem(
-                "userNowActivities",
-                JSON.stringify(this.users[1].activities)
-              );
-            } catch (error) {
-              console.error("Error updating activity status:", error);
-            }
-          },          
+          toggleComplete(activity) {
+            activity.status =
+              activity.status === "completed" ? "future" : "completed";
+            localStorage.setItem(
+              "userNowActivities",
+              JSON.stringify(this.users[1].activities)
+            );
+          },
+          
         },
         mounted() {
           const savedActivities = JSON.parse(
@@ -540,11 +518,11 @@
           if (savedActivities) this.users[1].activities = savedActivities;
         },
         created() {
-      this.fetchGroupName(); // Fetch group name when the component is created
-    },
-    mounted() {
-  this.fetchActivities();
-},
+          this.fetchGroupName(); // Fetch group name when the component is created
+        },
+        mounted() {
+          this.fetchActivities();
+        },
       });
     </script>
   </body>

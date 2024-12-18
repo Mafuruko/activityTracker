@@ -13,7 +13,8 @@ app.use(cors());
 
 // MongoDB URI
 const uri =
-  "mongodb+srv://Naufy:6969@activitytracker.jys5x.mongodb.net/activitytracker";
+  "mongodb+srv://Naufy:6969@activitytracker.jys5x.mongodb.net/activityTracker?retryWrites=true&w=majority";
+// const uri = "mongodb://localhost:27017/activityTracker";
 mongoose
   .connect(uri, {
     useNewUrlParser: true,

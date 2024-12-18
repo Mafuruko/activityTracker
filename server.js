@@ -179,7 +179,99 @@ app.post("/create", async (req, res) => {
   }
 });
 
-// Add Activity
+// Join Group Endpoint
+app.post("/join", async (req, res) => {
+  const { groupCode } = req.body;
+
+  // Validate inputs
+  if (!groupCode) {
+    return res.status(400).json({ message: "Group code are required." });
+  }
+
+  try {
+    // Find the group by the provided code
+    const group = await Groups.findOne({ name: groupCode });
+    if (!group) {
+      return res.status(404).json({ message: "Group not found." });
+    }
+
+    // Check if the user is already a member of the group
+    // if (group.members.includes(userId)) {
+    //   return res.status(400).json({ message: "User is already a member of this group." });
+    // }
+
+    // Add the user to the group members
+    // group.members.push(userId);
+    // await group.save();
+
+    res.status(200).json({ message: "Successfully joined the group." });
+  } catch (error) {
+    console.error("Error joining group:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+
+app.get("/activity", async (req, res) => {
+  try {
+    // Fetch activities from the database (customize query as needed)
+    const activities = await Activity.find(); // Optionally, add filters here
+    res.status(200).json(activities);
+  } catch (error) {
+    console.error("Error fetching activities:", error);
+    res.status(500).json({ message: "Failed to fetch activities." });
+  }
+});
+
+app.get("/choice", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "choice.html"));
+});
+
+app.get("/join", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "join.html"));
+});
+
+app.get("/create", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "create.html"));
+});
+
+app.post("/create", async (req, res) => {
+  const { groupName} = req.body;
+
+  if (!groupName) {
+    return res.status(400).json({ message: "Group name are required." });
+  }
+
+  try {
+    const existingGroup = await Groups.findOne({ name: groupName });
+    if (existingGroup) {
+      return res.status(400).json({ message: "Group name is already taken." });
+    }
+
+    const group = new Groups({
+      name: groupName,
+    });
+
+    await group.save();
+
+    res.status(201).json({ message: "Group created successfully", group });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+app.get("/activities", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "main.html"));
+});
+
+app.get("/profile", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "profile.html"));
+});
+
+app.get("/addAct", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "addActivity.html"));
+});
+
 app.post("/addAct", async (req, res) => {
   const { activityName, deadline, category, note } = req.body;
 
@@ -239,6 +331,72 @@ app.post("/addCat", async (req, res) => {
   }
 });
 
+const MemberProfileSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    profilePicture: {
+      type: String,
+      default: '', // URL to the profile picture
+    },
+  },
+  {
+    collection: 'profiles', // Explicitly set the collection name
+  }
+);
+
+const memberProfileSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  profilePicture: { type: String },
+  password: { type: String },
+});
+
+const MemberProfile = mongoose.model("MemberProfile", memberProfileSchema);
+
+app.post('/editProfile', async (req, res) => {
+  try {
+    const { name, email, profilePicture, password } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required!' });
+    }
+
+    // Check if the member profile already exists
+    let member = await MemberProfile.findOne({ email });
+
+    if (member) {
+      // Update existing profile
+      member.name = name;
+      member.profilePicture = profilePicture || member.profilePicture;
+      if (password) {
+        member.password = password; // Update password if provided
+      }
+    } else {
+      // Create a new profile
+      member = new MemberProfile({ name, email, profilePicture, password });
+    }
+
+    // Save to the database
+    await member.save();
+
+    res.status(200).json({ message: 'Profile saved successfully!', member });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 // Fetch Activities
 app.get("/activity", async (req, res) => {
   try {
@@ -261,7 +419,8 @@ app.get("/categories", async (req, res) => {
   }
 });
 
-// Server
+
+
 const PORT = 5500;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

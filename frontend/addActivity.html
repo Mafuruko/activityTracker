@@ -281,9 +281,8 @@
             }
             return response.json();
           })
-          .then((data) => {
-            alert(data.message || "Activity added successfully!");
-            // Optionally, redirect or clear the form
+          .then(() => {
+            window.location.href = "/activities";
           })
           .catch((error) => {
             console.error("Error saving activity:", error);

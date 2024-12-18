@@ -178,6 +178,17 @@
     </div>
 
     <div class="edit-profile-card">
+      <div
+        id="messageBox"
+        style="
+          margin-bottom: 20px;
+          color: #fff;
+          text-align: center;
+          padding: 10px;
+          border-radius: 5px;
+          display: none;
+        "
+      ></div>
       <h2>Add New Activity</h2>
 
       <div>
@@ -212,6 +223,18 @@
     </div>
 
     <script>
+      function showMessage(message, type = "success") {
+        const messageBox = document.getElementById("messageBox");
+        messageBox.textContent = message;
+        messageBox.style.backgroundColor =
+          type === "success" ? "#28a745" : "#dc3545"; // Green for success, red for error
+        messageBox.style.display = "block";
+
+        // Hide message after 5 seconds
+        setTimeout(() => {
+          messageBox.style.display = "none";
+        }, 5000);
+      }
       // Function to fetch categories from the backend and populate the select dropdown
       function populateCategories() {
         fetch("/categories") // Fetch categories from the server
@@ -242,22 +265,35 @@
           })
           .catch((error) => {
             console.error("Error fetching categories:", error);
-            alert("Unable to fetch categories. Please try again later.");
+            showMessage(
+              "Unable to fetch categories. Please try again later.",
+              "error"
+            );
           });
       }
 
       // Populate categories when the page loads
-      document.addEventListener("DOMContentLoaded", populateCategories);
+      // document.addEventListener("DOMContentLoaded", populateCategories);
+
+      // Function to clear all form input fields
+      function clearFormFields() {
+        document.getElementById("activityName").value = "";
+        document.getElementById("deadline").value = "";
+        document.getElementById("category").value = "";
+        document.getElementById("note").value = "";
+      }
 
       // Add event listener for saving activity
       document.getElementById("saveChanges").addEventListener("click", () => {
-        const activityName = document.getElementById("activityName").value.trim();
+        const activityName = document
+          .getElementById("activityName")
+          .value.trim();
         const deadline = document.getElementById("deadline").value;
         const category = document.getElementById("category").value;
         const note = document.getElementById("note").value.trim();
 
         if (!activityName || !deadline || !category) {
-          alert("Please fill in all required fields.");
+          showMessage("Please fill in all required fields.", "error");
           return;
         }
 
@@ -281,14 +317,22 @@
             }
             return response.json();
           })
-          .then(() => {
-            window.location.href = "/activities";
+          .then((data) => {
+            showMessage(
+              data.message || "Activity added successfully!",
+              "success"
+            );
+            clearFormFields(); // Clear the form fields after success
           })
           .catch((error) => {
             console.error("Error saving activity:", error);
-            alert("Unable to save the activity. Please try again.");
+            showMessage(
+              "Unable to save the activity. Please try again.",
+              "error"
+            );
           });
       });
-    </script>    
+      document.addEventListener("DOMContentLoaded", populateCategories);
+    </script>
   </body>
 </html>

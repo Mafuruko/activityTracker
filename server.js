@@ -10,6 +10,41 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+// Toggle Activity Completion Status
+app.patch("/activity/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const activity = await Activity.findById(id);
+    if (!activity) {
+      return res.status(404).json({ message: "Activity not found." });
+    }
+
+    // Toggle the isCompleted status
+    activity.isCompleted = !activity.isCompleted;
+    await activity.save();
+
+    res.status(200).json({
+      message: "Activity status updated successfully.",
+      activity,
+    });
+  } catch (error) {
+    console.error("Error updating activity status:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+// Fetch all activities
+app.get("/activity", async (req, res) => {
+  try {
+    const activities = await Activity.find();
+    res.status(200).json(activities);
+  } catch (error) {
+    console.error("Error fetching activities:", error);
+    res.status(500).json({ message: "Failed to fetch activities." });
+  }
+});
+
 
 // MongoDB URI
 const uri =
@@ -56,6 +91,7 @@ const activitySchema = new mongoose.Schema({
   deadline: { type: Date, required: true },
   category: { type: String, required: true, trim: true },
   note: { type: String, trim: true, default: "" },
+  isCompleted: { type: Boolean, default: false },
 });
 
 const Activity = mongoose.model("Activity", activitySchema);

@@ -47,6 +47,20 @@ app.get("/activity", async (req, res) => {
   }
 });
 
+app.get("/api/group", async (req, res) => {
+  try {
+    const group = await Groups.findOne(); // Replace with query logic if needed
+    if (!group) {
+      return res.status(404).json({ message: "Group not found." });
+    }
+    res.status(200).json({ groupName: group.name });
+  } catch (error) {
+    console.error("Error fetching group name:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+
 // MongoDB URI
 const uri =
   "mongodb+srv://Naufy:6969@activitytracker.jys5x.mongodb.net/activityTracker?retryWrites=true&w=majority";

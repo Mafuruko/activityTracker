@@ -461,7 +461,7 @@
               const data = await response.json();
               if (response.ok) {
                 body: JSON.stringify({ groupName: this.groupName }); 
-                // this.groupName = data.groupName; // Set the group name
+                this.groupName = data.groupName; // Set the group name
               } else {
                 console.error("Error fetching group name:", data.message);
               }

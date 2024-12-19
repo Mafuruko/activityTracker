@@ -132,7 +132,7 @@
     <div id="app" class="main-wrapper">
       <!-- Navbar -->
       <div class="navbar">
-        <a href="profile.html"> <i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/profile"> <i class="fa-solid fa-arrow-left"></i></a>
       </div>
 
       <!-- Centered Edit Profile Card -->
@@ -197,45 +197,54 @@
     </div>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // Populate form with existing user data
-        const userData = JSON.parse(localStorage.getItem("userData")) || {};
-
-        document.getElementById("name").value = userData.name || "";
-        document.getElementById("email").value = userData.email || "";
+        // Load existing profile data from localStorage (or fetch from backend in a real-world scenario)
         const profileImg = document.getElementById("profile-pic-preview");
-        profileImg.src =
-          userData.profilePicture ||
-          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png";
 
-        // Handle save button click
+        // Handle Save Changes button click
         document
           .getElementById("save-changes")
-          .addEventListener("click", function () {
+          .addEventListener("click", async function () {
             const name = document.getElementById("name").value;
             const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-            const confirmPassword =
-              document.getElementById("confirm-password").value;
+            const profilePicture = profileImg.src;
 
             if (!name || !email) {
               alert("Name and email are required!");
               return;
             }
 
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirm-password").value;
+
             if (password !== confirmPassword) {
               alert("Passwords do not match!");
               return;
             }
 
-            // Save updated profile data
-            const updatedUserData = {
-              name: name,
-              email: email,
-              profilePicture: profileImg.src,
-            };
-            localStorage.setItem("userData", JSON.stringify(updatedUserData));
-            //  alert("Profile updated successfully!");
-            window.location.href = "profile.html";
+            const userData = { name, email, profilePicture, password };
+
+            try {
+              const response = await fetch("/editProfile", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(userData),
+              });
+
+              if (response.ok) {
+                const result = await response.json();
+                alert("Profile updated successfully!");
+                console.log(result);
+                window.location.href = "/profile";
+              } else {
+                const error = await response.json();
+                alert(`Error: ${error.error}`);
+              }
+            } catch (err) {
+              console.error("Error saving profile:", err);
+              alert("An error occurred while saving the profile!");
+            }
           });
 
         // Handle profile picture change

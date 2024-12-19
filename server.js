@@ -7,6 +7,7 @@ const cors = require("cors");
 const app = express();
 
 // Middleware
+app.use(express.static(path.join(__dirname, "frontend")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
@@ -44,7 +45,6 @@ app.get("/activity", async (req, res) => {
     res.status(500).json({ message: "Failed to fetch activities." });
   }
 });
-
 
 // MongoDB URI
 const uri =
@@ -247,7 +247,6 @@ app.post("/join", async (req, res) => {
   }
 });
 
-
 app.get("/activity", async (req, res) => {
   try {
     // Fetch activities from the database (customize query as needed)
@@ -272,7 +271,7 @@ app.get("/create", (req, res) => {
 });
 
 app.post("/create", async (req, res) => {
-  const { groupName} = req.body;
+  const { groupName } = req.body;
 
   if (!groupName) {
     return res.status(400).json({ message: "Group name are required." });
@@ -382,11 +381,11 @@ const MemberProfileSchema = new mongoose.Schema(
     },
     profilePicture: {
       type: String,
-      default: '', // URL to the profile picture
+      default: "", // URL to the profile picture
     },
   },
   {
-    collection: 'profiles', // Explicitly set the collection name
+    collection: "profiles", // Explicitly set the collection name
   }
 );
 
@@ -399,12 +398,12 @@ const memberProfileSchema = new mongoose.Schema({
 
 const MemberProfile = mongoose.model("MemberProfile", memberProfileSchema);
 
-app.post('/editProfile', async (req, res) => {
+app.post("/editProfile", async (req, res) => {
   try {
     const { name, email, profilePicture, password } = req.body;
 
     if (!name || !email) {
-      return res.status(400).json({ error: 'Name and email are required!' });
+      return res.status(400).json({ error: "Name and email are required!" });
     }
 
     // Check if the member profile already exists
@@ -425,13 +424,12 @@ app.post('/editProfile', async (req, res) => {
     // Save to the database
     await member.save();
 
-    res.status(200).json({ message: 'Profile saved successfully!', member });
+    res.status(200).json({ message: "Profile saved successfully!", member });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 // Fetch Activities
 app.get("/activity", async (req, res) => {
@@ -454,8 +452,6 @@ app.get("/categories", async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 });
-
-
 
 const PORT = 5500;
 app.listen(PORT, () => {

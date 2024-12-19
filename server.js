@@ -14,6 +14,7 @@ app.use(cors());
 // Toggle Activity Completion Status
 app.patch("/activity/:id", async (req, res) => {
   const { id } = req.params;
+  const { isCompleted } = req.body; // Receive the new status from the request
 
   try {
     const activity = await Activity.findById(id);
@@ -21,8 +22,8 @@ app.patch("/activity/:id", async (req, res) => {
       return res.status(404).json({ message: "Activity not found." });
     }
 
-    // Toggle the isCompleted status
-    activity.isCompleted = !activity.isCompleted;
+    // Update the isCompleted field
+    activity.isCompleted = isCompleted;
     await activity.save();
 
     res.status(200).json({

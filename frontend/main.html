@@ -460,7 +460,8 @@
               });
               const data = await response.json();
               if (response.ok) {
-                this.groupName = data.groupName; // Set the group name
+                body: JSON.stringify({ groupName: this.groupName }); 
+                // this.groupName = data.groupName; // Set the group name
               } else {
                 console.error("Error fetching group name:", data.message);
               }

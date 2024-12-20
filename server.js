@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
 
 const app = express();
 
@@ -82,6 +84,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  profilePicture: { type: String, default: "" },
 });
 
 const Users = mongoose.model("User", userSchema);
@@ -145,8 +148,8 @@ app.get("/activities", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "main.html"));
 });
 
-app.get("/profile", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "profile.html"));
+app.get("/editprofile", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "editprofile.html"));
 });
 
 app.get("/addAct", (req, res) => {
@@ -159,7 +162,7 @@ app.get("/addCat", (req, res) => {
 
 // Register User
 app.post("/register", async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, profilePicture } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ error: "All fields are required" });
@@ -167,7 +170,7 @@ app.post("/register", async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new Users({ name, email, password: hashedPassword });
+    const newUser = new Users({ name, email, password: hashedPassword, profilePicture });
     await newUser.save();
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
@@ -180,7 +183,7 @@ app.post("/register", async (req, res) => {
 });
 
 // Login User
-app.post("/index", async (req, res) => {
+app.post("/", async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -398,11 +401,14 @@ const MemberProfileSchema = new mongoose.Schema(
       type: String,
       default: "", // URL to the profile picture
     },
+    password: {
+      type: String,
+      required: true, // Make this required if it's mandatory for all profiles
+      minlength: 6, // Optional: enforce a minimum length for password
+    },
   },
-  {
-    collection: "profiles", // Explicitly set the collection name
-  }
 );
+
 
 const memberProfileSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -413,38 +419,38 @@ const memberProfileSchema = new mongoose.Schema({
 
 const MemberProfile = mongoose.model("MemberProfile", memberProfileSchema);
 
-app.post("/editProfile", async (req, res) => {
+app.post("/upload", upload.single("profilePicture"), (req, res) => {
+  res.status(200).json({ filePath: req.file.path });
+});
+
+app.post("/editprofile", async (req, res) => {
+  const { name, email, profilePicture, password } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({ message: "Name and email are required." });
+  }
+
   try {
-    const { name, email, profilePicture, password } = req.body;
-
-    if (!name || !email) {
-      return res.status(400).json({ error: "Name and email are required!" });
+    const user = await Users.findOne({ email }); // Assuming email identifies the user
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
     }
 
-    // Check if the member profile already exists
-    let member = await MemberProfile.findOne({ email });
+    user.name = name;
+    user.profilePicture = profilePicture;
 
-    if (member) {
-      // Update existing profile
-      member.name = name;
-      member.profilePicture = profilePicture || member.profilePicture;
-      if (password) {
-        member.password = password; // Update password if provided
-      }
-    } else {
-      // Create a new profile
-      member = new MemberProfile({ name, email, profilePicture, password });
+    if (password) {
+      user.password = await bcrypt.hash(password, 10);
     }
 
-    // Save to the database
-    await member.save();
-
-    res.status(200).json({ message: "Profile saved successfully!", member });
+    await user.save();
+    res.status(200).json({ message: "Profile updated successfully." });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Internal server error." });
   }
 });
+
 
 // Fetch Activities
 app.get("/activity", async (req, res) => {

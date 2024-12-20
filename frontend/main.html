@@ -419,9 +419,7 @@
             const today = new Date().setHours(0, 0, 0, 0);
 
             return this.users.map((user) => {
-              // Flatten activities object into an array
-              const allActivities = Object.values(user.activities).flat();
-
+              // Group activities for this user only
               const activities = {
                 overdue: [],
                 today: [],
@@ -429,7 +427,7 @@
                 completed: [],
               };
 
-              allActivities.forEach((activity) => {
+              user.activities.forEach((activity) => {
                 const activityDate = new Date(activity.date).setHours(
                   0,
                   0,
@@ -460,7 +458,7 @@
               });
               const data = await response.json();
               if (response.ok) {
-                body: JSON.stringify({ groupName: this.groupName }); 
+                body: JSON.stringify({ groupName: this.groupName });
                 this.groupName = data.groupName; // Set the group name
               } else {
                 console.error("Error fetching group name:", data.message);

@@ -377,7 +377,7 @@
         el: "#app",
         data: {
           groupName: "",
-          currentUser: "User Now",
+          // currentUser: "User Now",
           users: [
             {
               name: "Nama User 1",
@@ -488,21 +488,16 @@
               const response = await fetch("/activity"); // Ensure this is awaited
               const data = await response.json();
               if (response.ok) {
-                this.users.forEach((user) => {
-                  if (user.name === this.currentUser) {
-                    user.activities = data
-                      .filter((activity) => activity.user === this.currentUser)
-                      .map((activity) => ({
-                        title: activity.activityName,
-                        date: activity.deadline.split("T")[0],
-                        time:
-                          activity.deadline.split("T")[1]?.slice(0, 5) ||
-                          "00:00",
-                        status: activity.isCompleted ? "completed" : "future",
-                        _id: activity._id, // For backend updates
-                      }));
-                  }
-                });
+                // Map activities to the "User Now" object in users array
+                const userNow = this.users.find(
+                  (user) => user.name === "User Now"
+                );
+                userNow.activities = data.map((activity) => ({
+                  title: activity.activityName,
+                  date: activity.deadline.split("T")[0],
+                  time: activity.deadline.split("T")[1]?.slice(0, 5) || "00:00",
+                  status: activity.isCompleted ? "completed" : "future",
+                }));
               } else {
                 console.error("Error fetching activities:", data.message);
               }
@@ -510,6 +505,7 @@
               console.error("Unexpected error fetching activities:", error);
             }
           },
+
           // async fetchActivities() {
           //   try {
           //     const response = await fetch("/activity");
@@ -542,33 +538,38 @@
               );
             }
           },
-          async toggleComplete(activity) {
-            // Optimistically update the UI
+
+          toggleComplete(activity) {
             activity.status =
               activity.status === "completed" ? "future" : "completed";
-
-            // Send the status update to the backend
-            try {
-              const response = await fetch(`/activity/${activity._id}`, {
-                method: "PATCH",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  isCompleted: activity.status === "completed",
-                }),
-              });
-
-              if (!response.ok) {
-                console.error(
-                  "Failed to update activity status:",
-                  await response.json()
-                );
-              }
-            } catch (error) {
-              console.error("Unexpected error updating activity:", error);
-            }
           },
+          // async toggleComplete(activity) {
+          //   // Optimistically update the UI
+          //   activity.status =
+          //     activity.status === "completed" ? "future" : "completed";
+
+          //   // Send the status update to the backend
+          //   try {
+          //     const response = await fetch(`/activity/${activity._id}`, {
+          //       method: "PATCH",
+          //       headers: {
+          //         "Content-Type": "application/json",
+          //       },
+          //       body: JSON.stringify({
+          //         isCompleted: activity.status === "completed",
+          //       }),
+          //     });
+
+          //     if (!response.ok) {
+          //       console.error(
+          //         "Failed to update activity status:",
+          //         await response.json()
+          //       );
+          //     }
+          //   } catch (error) {
+          //     console.error("Unexpected error updating activity:", error);
+          //   }
+          // },
           // toggleComplete(activity) {
           //   activity.status =
           //     activity.status === "completed" ? "future" : "completed";
@@ -590,7 +591,7 @@
 
         mounted() {
           this.fetchGroupName();
-          this.fetchCurrentUser()
+          this.fetchCurrentUser();
           this.fetchActivities();
         },
       });

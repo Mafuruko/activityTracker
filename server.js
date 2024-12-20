@@ -51,10 +51,18 @@ app.get("/activity", async (req, res) => {
 
 app.get("/api/group", async (req, res) => {
   try {
-    const group = await Groups.findOne(); // Replace with query logic if needed
+    // Assuming the user ID is available in req.user.id or req.user
+    const userId = req.user.id; // Make sure req.user is populated (e.g., via middleware)
+
+    // Find the most recent group joined or created by the user
+    const group = await Groups.findOne({ members: userId }) // Query for groups where the user is a member
+      .sort({ joinedAt: -1 }) // Sort by the most recently joined group (descending)
+      .exec();
+
     if (!group) {
       return res.status(404).json({ message: "Group not found." });
     }
+
     res.status(200).json({ groupName: group.name });
   } catch (error) {
     console.error("Error fetching group name:", error);
@@ -62,6 +70,18 @@ app.get("/api/group", async (req, res) => {
   }
 });
 
+// app.get("/api/group", async (req, res) => {
+//   try {
+//     const group = await Groups.findOne(); // Replace with query logic if needed
+//     if (!group) {
+//       return res.status(404).json({ message: "Group not found." });
+//     }
+//     res.status(200).json({ groupName: group.name });
+//   } catch (error) {
+//     console.error("Error fetching group name:", error);
+//     res.status(500).json({ message: "Internal server error." });
+//   }
+// });
 
 // MongoDB URI
 const uri =
@@ -170,7 +190,12 @@ app.post("/register", async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new Users({ name, email, password: hashedPassword, profilePicture });
+    const newUser = new Users({
+      name,
+      email,
+      password: hashedPassword,
+      profilePicture,
+    });
     await newUser.save();
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
@@ -384,31 +409,28 @@ app.post("/addCat", async (req, res) => {
   }
 });
 
-const MemberProfileSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    profilePicture: {
-      type: String,
-      default: "", // URL to the profile picture
-    },
-    password: {
-      type: String,
-      required: true, // Make this required if it's mandatory for all profiles
-      minlength: 6, // Optional: enforce a minimum length for password
-    },
+const MemberProfileSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
   },
-);
-
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+  profilePicture: {
+    type: String,
+    default: "", // URL to the profile picture
+  },
+  password: {
+    type: String,
+    required: true, // Make this required if it's mandatory for all profiles
+    minlength: 6, // Optional: enforce a minimum length for password
+  },
+});
 
 const memberProfileSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -463,7 +485,6 @@ app.get("/api/user/:id", async (req, res) => {
     res.status(500).json({ message: "Error fetching user data", error });
   }
 });
-
 
 // Fetch Activities
 app.get("/activity", async (req, res) => {

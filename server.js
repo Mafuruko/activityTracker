@@ -451,6 +451,19 @@ app.post("/editprofile", async (req, res) => {
   }
 });
 
+app.get("/api/user/:id", async (req, res) => {
+  try {
+    const user = await Users.findById(req.params.name); // Replace with actual user ID
+    if (user) {
+      res.status(200).json(user);
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching user data", error });
+  }
+});
+
 
 // Fetch Activities
 app.get("/activity", async (req, res) => {

@@ -48,11 +48,22 @@ app.get("/activity", async (req, res) => {
     res.status(500).json({ message: "Failed to fetch activities." });
   }
 });
+const jwt = require("jsonwebtoken");
 
 app.get("/api/group", async (req, res) => {
   try {
-    // Assuming the user ID is available in req.user.id or req.user
-    const userId = req.user.id; // Make sure req.user is populated (e.g., via middleware)
+    // Get the token from the Authorization header
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "No token provided." });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    // Decode the token to get the user ID
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id; // Assuming the token contains a `userId` field
 
     // Find the most recent group joined or created by the user
     const group = await Groups.findOne({ members: userId }) // Query for groups where the user is a member
@@ -69,6 +80,7 @@ app.get("/api/group", async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 });
+
 
 // app.get("/api/group", async (req, res) => {
 //   try {

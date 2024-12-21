@@ -392,8 +392,8 @@ app.post("/create", async (req, res) => {
 
     const newGroup = new Groups({
       name: groupName,
-      createdBy: req.session.user._id, // Associate group with logged-in user
-      members: [req.session.user._id], // Add user as group member
+      createdBy: req.session.user._id, 
+      members: [req.session.user._id], 
     });
     await newGroup.save();
 

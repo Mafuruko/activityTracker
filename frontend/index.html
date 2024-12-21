@@ -198,8 +198,12 @@
 
               if (response.ok) {
                 // Store the token or user data in sessionStorage
-                sessionStorage.setItem("token", data.token); // Assuming server sends a token
-                sessionStorage.setItem("user", JSON.stringify(data.user)); // Save user details
+                sessionStorage.setItem("user", this.email); // Save user details
+                console.log(this.email);
+                let ambil = sessionStorage.getItem("user");
+                console.log(ambil);
+
+
 
                 // Redirect to the choice/dashboard page
                 window.location.href = "/choice";

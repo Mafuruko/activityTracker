@@ -171,6 +171,9 @@
               return;
             }
 
+            let ambil = sessionStorage.getItem("user");
+
+
             try {
               // Send request to the backend to create the group
               const response = await fetch("/create", {
@@ -203,6 +206,8 @@
           },
         },
       });
+
+
     </script>
   </body>
 </html>

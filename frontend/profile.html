@@ -141,6 +141,7 @@
       <!-- Navbar -->
       <div class="navbar">
         <a href="/activities"> <i class="fa-solid fa-arrow-left"></i></a>
+        <a href="#" @click="logout" style="float: right; color: red">Logout</a>
       </div>
 
       <!-- Main Content -->
@@ -276,7 +277,8 @@
           pendingTasks() {
             return this.activities.filter(
               (activity) =>
-                !activity.status || activity.status.toLowerCase() !== "completed"
+                !activity.status ||
+                activity.status.toLowerCase() !== "completed"
             ).length;
           },
         },
@@ -285,7 +287,9 @@
             try {
               const response = await fetch(`/api/user/${userId}`);
               if (!response.ok) {
-                throw new Error(`Error fetching user data: ${response.statusText}`);
+                throw new Error(
+                  `Error fetching user data: ${response.statusText}`
+                );
               }
               const data = await response.json();
               this.userData = data;
@@ -295,12 +299,24 @@
               console.error("Failed to fetch user data:", error);
             }
           },
+          async logout() {
+            try {
+              const response = await fetch("/logout", { method: "POST" });
+              if (response.ok) {
+                window.location.href = "/"; // Redirect to login page
+              } else {
+                console.error("Failed to log out.");
+              }
+            } catch (error) {
+              console.error("An error occurred while logging out:", error);
+            }
+          },
         },
         mounted() {
-          const userId = userData.name; 
+          const userId = userData.name;
           this.fetchUserData(userId);
         },
       });
-      </script>
+    </script>
   </body>
 </html>

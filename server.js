@@ -5,6 +5,8 @@ const bcrypt = require("bcrypt");
 const cors = require("cors");
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
 
 const app = express();
 
@@ -13,6 +15,21 @@ app.use(express.static(path.join(__dirname, "frontend")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.use(
+  session({
+    secret: "yourSecretKey", // Replace with a strong secret key
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: "mongodb://localhost:27017/activityTracker", // Your MongoDB URL
+      collectionName: "sessions",
+    }),
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      httpOnly: true, // Secure the cookie
+    },
+  })
+);
 // Toggle Activity Completion Status
 app.patch("/activity/:id", async (req, res) => {
   const { id } = req.params;
@@ -201,6 +218,8 @@ app.post("/", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials." });
     }
 
+    req.session.user = user;
+
     res.status(200).json({ message: "Login successful", user: user.name });
   } catch (error) {
     res.status(500).json({ message: "Server error. Please try again later." });
@@ -264,6 +283,17 @@ app.post("/join", async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 });
+
+app.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ message: "Could not log out. Try again later." });
+    }
+    res.clearCookie("connect.sid"); // Clear the session cookie
+    res.status(200).json({ message: "Logout successful." });
+  });
+});
+
 
 app.get("/activity", async (req, res) => {
   try {

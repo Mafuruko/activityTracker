@@ -21,7 +21,8 @@ app.use(
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: "mongodb+srv://Naufy:6969@activitytracker.jys5x.mongodb.net/activityTracker", 
+      mongoUrl:
+        "mongodb+srv://Naufy:6969@activitytracker.jys5x.mongodb.net/activityTracker",
       collectionName: "sessions",
     }),
     cookie: {
@@ -78,7 +79,6 @@ app.get("/api/group", async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 });
-
 
 // MongoDB URI
 const uri =
@@ -188,7 +188,12 @@ app.post("/register", async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new Users({ name, email, password: hashedPassword, profilePicture });
+    const newUser = new Users({
+      name,
+      email,
+      password: hashedPassword,
+      profilePicture,
+    });
     await newUser.save();
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
@@ -219,13 +224,39 @@ app.post("/", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials." });
     }
 
-    // Store the username in the session
-    req.session.user = { email: user.email };
-    res.status(200).json({ message: "Login successful", user: user.email });
+    req.session.user = user; // Save the logged-in user in session
+    res.status(200).json({ message: "Login successful" });
   } catch (error) {
+    console.error("Error during login:", error);
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 });
+
+// app.post("/", async (req, res) => {
+//   const { email, password } = req.body;
+
+//   if (!email || !password) {
+//     return res.status(400).json({ message: "All fields are required." });
+//   }
+
+//   try {
+//     const user = await Users.findOne({ email });
+//     if (!user) {
+//       return res.status(401).json({ message: "Invalid credentials." });
+//     }
+
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+//     if (!isPasswordValid) {
+//       return res.status(401).json({ message: "Invalid credentials." });
+//     }
+
+//     // Store the username in the session
+//     req.session.user = { email: user.email };
+//     res.status(200).json({ message: "Login successful", user: user.email });
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error. Please try again later." });
+//   }
+// });
 
 // Logout User
 app.post("/logout", (req, res) => {
@@ -291,7 +322,6 @@ app.post("/create", async (req, res) => {
   }
 });
 
-
 // Join Group Endpoint
 app.post("/join", async (req, res) => {
   const { groupCode } = req.body;
@@ -323,7 +353,6 @@ app.post("/join", async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 });
-
 
 app.get("/activity", async (req, res) => {
   try {
@@ -361,11 +390,12 @@ app.post("/create", async (req, res) => {
       return res.status(400).json({ message: "Group name is already taken." });
     }
 
-    const group = new Groups({
+    const newGroup = new Groups({
       name: groupName,
+      createdBy: req.session.user._id, // Associate group with logged-in user
+      members: [req.session.user._id], // Add user as group member
     });
-
-    await group.save();
+    await newGroup.save();
 
     res.status(201).json({ message: "Group created successfully", group });
   } catch (error) {
@@ -444,31 +474,28 @@ app.post("/addCat", async (req, res) => {
   }
 });
 
-const MemberProfileSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    profilePicture: {
-      type: String,
-      default: "", // URL to the profile picture
-    },
-    password: {
-      type: String,
-      required: true, // Make this required if it's mandatory for all profiles
-      minlength: 6, // Optional: enforce a minimum length for password
-    },
+const MemberProfileSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
   },
-);
-
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+  profilePicture: {
+    type: String,
+    default: "", // URL to the profile picture
+  },
+  password: {
+    type: String,
+    required: true, // Make this required if it's mandatory for all profiles
+    minlength: 6, // Optional: enforce a minimum length for password
+  },
+});
 
 const memberProfileSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -523,7 +550,6 @@ app.get("/api/user/:id", async (req, res) => {
     res.status(500).json({ message: "Error fetching user data", error });
   }
 });
-
 
 // Fetch Activities
 app.get("/activity", async (req, res) => {

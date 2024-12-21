@@ -21,7 +21,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: "mongodb://localhost:27017/activityTracker", // Your MongoDB URL
+      mongoUrl: "mongodb+srv://Naufy:6969@activitytracker.jys5x.mongodb.net/activityTracker", 
       collectionName: "sessions",
     }),
     cookie: {
@@ -102,6 +102,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   profilePicture: { type: String, default: "" },
+  groupName: { type: String, default: "" },
 });
 
 const Users = mongoose.model("User", userSchema);
@@ -218,30 +219,68 @@ app.post("/", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials." });
     }
 
-    req.session.user = user;
-
-    res.status(200).json({ message: "Login successful", user: user.name });
+    // Store the username in the session
+    req.session.user = { email: user.email };
+    res.status(200).json({ message: "Login successful", user: user.email });
   } catch (error) {
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 });
 
+// Logout User
+app.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ message: "Failed to log out." });
+    }
+    res.status(200).json({ message: "Logout successful." });
+  });
+});
+
+// Get Current User
+app.get("/api/session", (req, res) => {
+  if (req.session.user) {
+    res.status(200).json({ user: req.session.user });
+  } else {
+    res.status(401).json({ message: "Not logged in." });
+  }
+});
+
 // Create Group
 app.post("/create", async (req, res) => {
-  const { groupName } = req.body;
+  // Ensure the session contains user information
+  const userId = req.session?.user?.email; // Assuming user ID is stored in the session
 
-  if (!groupName) {
-    return res.status(400).json({ message: "Group name is required." });
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized. Please log in." });
   }
 
   try {
+    // Fetch user from the database
+    const user = await Users.findById(user.email);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const { groupName } = req.body;
+    if (!groupName) {
+      return res.status(400).json({ message: "Group name is required." });
+    }
+
+    // Check if group name already exists
     const existingGroup = await Groups.findOne({ name: groupName });
     if (existingGroup) {
       return res.status(400).json({ message: "Group name already exists." });
     }
 
+    // Create a new group
     const newGroup = new Groups({ name: groupName });
     await newGroup.save();
+
+    // Associate the new group with the user
+    user.groupName = groupName || [];
+    user.groupName.push(newGroup._id);
+    await user.save();
 
     res
       .status(201)
@@ -251,6 +290,7 @@ app.post("/create", async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 });
+
 
 // Join Group Endpoint
 app.post("/join", async (req, res) => {
@@ -282,16 +322,6 @@ app.post("/join", async (req, res) => {
     console.error("Error joining group:", error);
     res.status(500).json({ message: "Internal server error." });
   }
-});
-
-app.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ message: "Could not log out. Try again later." });
-    }
-    res.clearCookie("connect.sid"); // Clear the session cookie
-    res.status(200).json({ message: "Logout successful." });
-  });
 });
 
 

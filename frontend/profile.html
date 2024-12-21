@@ -133,6 +133,19 @@
         color: #666;
         font-size: 0.9rem;
       }
+      .logout-btn {
+        background-color: #e74c3c;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+
+      .logout-btn:hover {
+        background-color: #c0392b;
+      }
     </style>
   </head>
   <body>
@@ -301,16 +314,27 @@
           },
           async logout() {
             try {
-              const response = await fetch("/logout", { method: "POST" });
-              if (response.ok) {
-                window.location.href = "/"; // Redirect to login page
-              } else {
-                console.error("Failed to log out.");
-              }
+              await fetch("/api/logout", { method: "POST" });
             } catch (error) {
-              console.error("An error occurred while logging out:", error);
+              console.error("Failed to log out from backend:", error);
             }
+            // Clear frontend data
+            localStorage.clear();
+            window.location.href = "/";
           },
+
+          // async logout() {
+          //   try {
+          //     const response = await fetch("/logout", { method: "POST" });
+          //     if (response.ok) {
+          //       window.location.href = "/"; // Redirect to login page
+          //     } else {
+          //       console.error("Failed to log out.");
+          //     }
+          //   } catch (error) {
+          //     console.error("An error occurred while logging out:", error);
+          //   }
+          // },
         },
         mounted() {
           const userId = userData.name;

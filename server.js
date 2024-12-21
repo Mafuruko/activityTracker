@@ -3,8 +3,7 @@ const mongoose = require("mongoose");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
-const multer = require("multer");
-const upload = multer({ dest: "uploads/" });
+const session = require("express-session");
 
 const app = express();
 
@@ -48,32 +47,13 @@ app.get("/activity", async (req, res) => {
     res.status(500).json({ message: "Failed to fetch activities." });
   }
 });
-const jwt = require("jsonwebtoken");
 
-app.get("/api/group", async (req, res) => {
+app.get("/groupname", async (req, res) => {
   try {
-    // Get the token from the Authorization header
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "No token provided." });
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    // Decode the token to get the user ID
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id; // Assuming the token contains a `userId` field
-
-    // Find the most recent group joined or created by the user
-    const group = await Groups.findOne({ members: userId }) // Query for groups where the user is a member
-      .sort({ joinedAt: -1 }) // Sort by the most recently joined group (descending)
-      .exec();
-
+    const group = await Users.findOne(); // cari findOne nama user
     if (!group) {
       return res.status(404).json({ message: "Group not found." });
     }
-
     res.status(200).json({ groupName: group.name });
   } catch (error) {
     console.error("Error fetching group name:", error);
@@ -81,19 +61,6 @@ app.get("/api/group", async (req, res) => {
   }
 });
 
-
-// app.get("/api/group", async (req, res) => {
-//   try {
-//     const group = await Groups.findOne(); // Replace with query logic if needed
-//     if (!group) {
-//       return res.status(404).json({ message: "Group not found." });
-//     }
-//     res.status(200).json({ groupName: group.name });
-//   } catch (error) {
-//     console.error("Error fetching group name:", error);
-//     res.status(500).json({ message: "Internal server error." });
-//   }
-// });
 
 // MongoDB URI
 const uri =
@@ -117,24 +84,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   profilePicture: { type: String, default: "" },
+  groupName: { type: String, default: "" },
 });
 
 const Users = mongoose.model("User", userSchema);
-
-const groupSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    maxlength: 50,
-  },
-  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  createdAt: { type: Date, default: Date.now },
-});
-
-const Groups = mongoose.model("Group", groupSchema);
 
 const activitySchema = new mongoose.Schema({
   activityName: { type: String, required: true, trim: true },
@@ -202,12 +155,7 @@ app.post("/register", async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new Users({
-      name,
-      email,
-      password: hashedPassword,
-      profilePicture,
-    });
+    const newUser = new Users({ name, email, password: hashedPassword, profilePicture });
     await newUser.save();
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
@@ -238,9 +186,30 @@ app.post("/", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials." });
     }
 
+    // Store the username in the session
+    req.session.user = { id: user._id, name: user.name };
     res.status(200).json({ message: "Login successful", user: user.name });
   } catch (error) {
     res.status(500).json({ message: "Server error. Please try again later." });
+  }
+});
+
+// Logout User
+app.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ message: "Failed to log out." });
+    }
+    res.status(200).json({ message: "Logout successful." });
+  });
+});
+
+// Get Current User
+app.get("/api/session", (req, res) => {
+  if (req.session.user) {
+    res.status(200).json({ user: req.session.user });
+  } else {
+    res.status(401).json({ message: "Not logged in." });
   }
 });
 
@@ -253,7 +222,7 @@ app.post("/create", async (req, res) => {
   }
 
   try {
-    const existingGroup = await Groups.findOne({ name: groupName });
+    const existingGroup = await Users.findOne({ name: groupName });
     if (existingGroup) {
       return res.status(400).json({ message: "Group name already exists." });
     }
@@ -280,20 +249,10 @@ app.post("/join", async (req, res) => {
   }
 
   try {
-    // Find the group by the provided code
-    const group = await Groups.findOne({ name: groupCode });
+    const group = await Groups.findOne({ name: groupName });
     if (!group) {
       return res.status(404).json({ message: "Group not found." });
     }
-
-    // Check if the user is already a member of the group
-    // if (group.members.includes(userId)) {
-    //   return res.status(400).json({ message: "User is already a member of this group." });
-    // }
-
-    // Add the user to the group members
-    // group.members.push(userId);
-    // await group.save();
 
     res.status(200).json({ message: "Successfully joined the group." });
   } catch (error) {
@@ -421,28 +380,31 @@ app.post("/addCat", async (req, res) => {
   }
 });
 
-const MemberProfileSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
+const MemberProfileSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    profilePicture: {
+      type: String,
+      default: "", // URL to the profile picture
+    },
+    password: {
+      type: String,
+      required: true, // Make this required if it's mandatory for all profiles
+      minlength: 6, // Optional: enforce a minimum length for password
+    },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
-  profilePicture: {
-    type: String,
-    default: "", // URL to the profile picture
-  },
-  password: {
-    type: String,
-    required: true, // Make this required if it's mandatory for all profiles
-    minlength: 6, // Optional: enforce a minimum length for password
-  },
-});
+);
+
 
 const memberProfileSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -497,6 +459,7 @@ app.get("/api/user/:id", async (req, res) => {
     res.status(500).json({ message: "Error fetching user data", error });
   }
 });
+
 
 // Fetch Activities
 app.get("/activity", async (req, res) => {

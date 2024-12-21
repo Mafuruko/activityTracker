@@ -3,7 +3,8 @@ const mongoose = require("mongoose");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
-const session = require("express-session");
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
 
 const app = express();
 
@@ -48,9 +49,9 @@ app.get("/activity", async (req, res) => {
   }
 });
 
-app.get("/groupname", async (req, res) => {
+app.get("/api/group", async (req, res) => {
   try {
-    const group = await Users.findOne(); // cari findOne nama user
+    const group = await Groups.findOne(); // cari findOne nama user
     if (!group) {
       return res.status(404).json({ message: "Group not found." });
     }
@@ -84,10 +85,24 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   profilePicture: { type: String, default: "" },
-  groupName: { type: String, default: "" },
 });
 
 const Users = mongoose.model("User", userSchema);
+
+const groupSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    maxlength: 50,
+  },
+  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  createdAt: { type: Date, default: Date.now },
+});
+
+const Groups = mongoose.model("Group", groupSchema);
 
 const activitySchema = new mongoose.Schema({
   activityName: { type: String, required: true, trim: true },
@@ -186,30 +201,9 @@ app.post("/", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials." });
     }
 
-    // Store the username in the session
-    req.session.user = { id: user._id, name: user.name };
     res.status(200).json({ message: "Login successful", user: user.name });
   } catch (error) {
     res.status(500).json({ message: "Server error. Please try again later." });
-  }
-});
-
-// Logout User
-app.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ message: "Failed to log out." });
-    }
-    res.status(200).json({ message: "Logout successful." });
-  });
-});
-
-// Get Current User
-app.get("/api/session", (req, res) => {
-  if (req.session.user) {
-    res.status(200).json({ user: req.session.user });
-  } else {
-    res.status(401).json({ message: "Not logged in." });
   }
 });
 
@@ -222,7 +216,7 @@ app.post("/create", async (req, res) => {
   }
 
   try {
-    const existingGroup = await Users.findOne({ name: groupName });
+    const existingGroup = await Groups.findOne({ name: groupName });
     if (existingGroup) {
       return res.status(400).json({ message: "Group name already exists." });
     }
@@ -249,10 +243,20 @@ app.post("/join", async (req, res) => {
   }
 
   try {
-    const group = await Groups.findOne({ name: groupName });
+    // Find the group by the provided code
+    const group = await Groups.findOne({ name: groupCode });
     if (!group) {
       return res.status(404).json({ message: "Group not found." });
     }
+
+    // Check if the user is already a member of the group
+    // if (group.members.includes(userId)) {
+    //   return res.status(400).json({ message: "User is already a member of this group." });
+    // }
+
+    // Add the user to the group members
+    // group.members.push(userId);
+    // await group.save();
 
     res.status(200).json({ message: "Successfully joined the group." });
   } catch (error) {

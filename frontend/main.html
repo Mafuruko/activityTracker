@@ -454,7 +454,7 @@
         methods: {
           async fetchGroupName() {
             try {
-              const response = await fetch("/groupname");
+              const response = await fetch("/api/group");
               const data = await response.json();
               if (response.ok) {
                 this.groupName = data.groupName; // Set to the correct, most recent group

@@ -183,7 +183,7 @@
 
             try {
               // Send login request to the server
-              const response = await fetch("http://localhost:5500/", {
+              const response = await fetch("/", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -197,9 +197,8 @@
               const data = await response.json();
 
               if (response.ok) {
-                // Store the token or user data in sessionStorage
-                sessionStorage.setItem("token", data.token); // Assuming server sends a token
-                sessionStorage.setItem("user", JSON.stringify(data.user)); // Save user details
+                sessionStorage.setItem("userNow", JSON.stringify(this.email)); // Save user details
+                console.log(sessionStorage.getItem("userNow"));
 
                 // Redirect to the choice/dashboard page
                 window.location.href = "/choice";
@@ -212,40 +211,10 @@
               // Handle unexpected errors
               this.errorMessage =
                 "An error occurred while logging in. Please try again.";
+                console.log("Response status:", response.status);
+                console.log("Response data:", data);
             }
           },
-
-          // async login() {
-          //   // Basic validation
-          //   if (!this.email || !this.password) {
-          //     this.errorMessage = "Please enter both email and password.";
-          //     return;
-          //   }
-
-          //   try {
-          //     const response = await fetch("http://localhost:5500/", {
-          //       method: "POST",
-          //       headers: {
-          //         "Content-Type": "application/json",
-          //       },
-          //       body: JSON.stringify({
-          //         email: this.email,
-          //         password: this.password,
-          //       }),
-          //     });
-
-          //     const data = await response.json();
-
-          //     if (response.ok) {
-          //       // Redirect to dashboard or home
-          //       window.location.href = "/choice";
-          //     } else {
-          //       this.errorMessage = data.message || "Invalid credentials.";
-          //     }
-          //   } catch (error) {
-          //     this.errorMessage = "An error occurred. Please try again.";
-          //   }
-          // },
           clearError() {
             this.errorMessage = "";
           },

@@ -5,7 +5,6 @@ const bcrypt = require("bcrypt");
 const cors = require("cors");
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
-const session = require("express-session");
 const MongoStore = require("connect-mongo");
 
 const app = express();
@@ -15,21 +14,21 @@ app.use(express.static(path.join(__dirname, "frontend")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
-app.use(
-  session({
-    secret: "yourSecretKey", // Replace with a strong secret key
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: "mongodb+srv://Naufy:6969@activitytracker.jys5x.mongodb.net/activityTracker", 
-      collectionName: "sessions",
-    }),
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-      httpOnly: true, // Secure the cookie
-    },
+
+// const uri = "mongodb+srv://Naufy:6969@activitytracker.jys5x.mongodb.net/";
+const uri = "mongodb://localhost:27017/activityTracker";
+mongoose
+  .connect(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
   })
-);
+  .then(() => {
+    console.log("MongoDB connected successfully!");
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
+
 // Toggle Activity Completion Status
 app.patch("/activity/:id", async (req, res) => {
   const { id } = req.params;
@@ -78,23 +77,6 @@ app.get("/api/group", async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 });
-
-
-// MongoDB URI
-const uri =
-  "mongodb+srv://Naufy:6969@activitytracker.jys5x.mongodb.net/activityTracker?retryWrites=true&w=majority";
-// const uri = "mongodb://localhost:27017/activityTracker";
-mongoose
-  .connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("MongoDB connected successfully!");
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
-  });
 
 // MongoDB Models
 const userSchema = new mongoose.Schema({
@@ -219,105 +201,36 @@ app.post("/", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials." });
     }
 
-    // Store the username in the session
-    req.session.user = { email: user.email };
-    res.status(200).json({ message: "Login successful", user: user.email });
+    res.status(200).json({ message: "Login successful" });
   } catch (error) {
+    console.error("Server error:", error);
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 });
 
-// Logout User
-app.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ message: "Failed to log out." });
-    }
-    res.status(200).json({ message: "Logout successful." });
-  });
-});
-
-// Get Current User
-app.get("/api/session", (req, res) => {
-  if (req.session.user) {
-    res.status(200).json({ user: req.session.user });
-  } else {
-    res.status(401).json({ message: "Not logged in." });
-  }
-});
-
-// Create Group
-app.post("/create", async (req, res) => {
-  // Ensure the session contains user information
-  const userId = req.session?.user?.email; // Assuming user ID is stored in the session
-
-  if (!userId) {
-    return res.status(401).json({ message: "Unauthorized. Please log in." });
-  }
-
-  try {
-    // Fetch user from the database
-    const user = await Users.findById(user.email);
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    const { groupName } = req.body;
-    if (!groupName) {
-      return res.status(400).json({ message: "Group name is required." });
-    }
-
-    // Check if group name already exists
-    const existingGroup = await Groups.findOne({ name: groupName });
-    if (existingGroup) {
-      return res.status(400).json({ message: "Group name already exists." });
-    }
-
-    // Create a new group
-    const newGroup = new Groups({ name: groupName });
-    await newGroup.save();
-
-    // Associate the new group with the user
-    user.groupName = groupName || [];
-    user.groupName.push(newGroup._id);
-    await user.save();
-
-    res
-      .status(201)
-      .json({ message: "Group created successfully.", group: newGroup });
-  } catch (error) {
-    console.error("Error creating group:", error);
-    res.status(500).json({ message: "Internal server error." });
-  }
-});
-
-
 // Join Group Endpoint
 app.post("/join", async (req, res) => {
-  const { groupCode } = req.body;
+  const { email, groupName } = req.body;
 
   // Validate inputs
-  if (!groupCode) {
-    return res.status(400).json({ message: "Group code are required." });
+  if (!groupName) {
+    return res.status(400).json({ message: "Group name are required." });
   }
 
   try {
     // Find the group by the provided code
-    const group = await Groups.findOne({ name: groupCode });
-    if (!group) {
-      return res.status(404).json({ message: "Group not found." });
+    const user = await Users.findOne({ email });
+    if (user) {
+      const group = await Users.findOne({ groupName });
+
+      if (!group) {
+        return res.status(400).json({ message: "You are not a member of this group." });
+      }
+    } else {
+      return res.status(404).json({ message: "Please log in first." });
     }
 
-    // Check if the user is already a member of the group
-    // if (group.members.includes(userId)) {
-    //   return res.status(400).json({ message: "User is already a member of this group." });
-    // }
-
-    // Add the user to the group members
-    // group.members.push(userId);
-    // await group.save();
-
-    res.status(200).json({ message: "Successfully joined the group." });
+    console.log("Successfully joined the group:", groupName );
   } catch (error) {
     console.error("Error joining group:", error);
     res.status(500).json({ message: "Internal server error." });
@@ -340,23 +253,18 @@ app.get("/choice", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "choice.html"));
 });
 
-app.get("/join", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "join.html"));
-});
-
-app.get("/create", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "create.html"));
-});
-
 app.post("/create", async (req, res) => {
-  const { groupName } = req.body;
+  const { email, groupName } = req.body;
+
+  console.log("Received session data:", email);
+
 
   if (!groupName) {
     return res.status(400).json({ message: "Group name are required." });
   }
 
   try {
-    const existingGroup = await Groups.findOne({ name: groupName });
+    const existingGroup = await Users.findOne({ name: groupName });
     if (existingGroup) {
       return res.status(400).json({ message: "Group name is already taken." });
     }
@@ -365,7 +273,13 @@ app.post("/create", async (req, res) => {
       name: groupName,
     });
 
-    await group.save();
+    const user = await Users.findOne({ email }); // Assuming email identifies the user
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    user.groupName = groupName;
+    await user.save();
 
     res.status(201).json({ message: "Group created successfully", group });
   } catch (error) {
@@ -511,18 +425,18 @@ app.post("/editprofile", async (req, res) => {
   }
 });
 
-app.get("/api/user/:id", async (req, res) => {
-  try {
-    const user = await Users.findById(req.params.name); // Replace with actual user ID
-    if (user) {
-      res.status(200).json(user);
-    } else {
-      res.status(404).json({ message: "User not found" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching user data", error });
-  }
-});
+// app.get("/api/user/:id", async (req, res) => {
+//   try {
+//     const user = await Users.findById(req.params.name); // Replace with actual user ID
+//     if (user) {
+//       res.status(200).json(user);
+//     } else {
+//       res.status(404).json({ message: "User not found" });
+//     }
+//   } catch (error) {
+//     res.status(500).json({ message: "Error fetching user data", error });
+//   }
+// });
 
 
 // Fetch Activities

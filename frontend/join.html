@@ -141,7 +141,7 @@
         <input
           type="text"
           placeholder="Group's Name "
-          v-model="groupCode"
+          v-model="groupName"
           @input="clearError"
         />
       </div>
@@ -160,16 +160,19 @@
       new Vue({
         el: "#app",
         data: {
-          groupCode: "",
+          email: "",
+          groupName: "",
           errorMessage: "",
         },
         methods: {
           async joinGroup() {
             // Simple form validation
-            if (!this.groupCode) {
-              this.errorMessage = "Group code is required.";
+            if (!this.groupName) {
+              this.errorMessage = "Group name is required.";
               return;
             }
+
+            const email = JSON.parse(sessionStorage.getItem("userNow"));
 
             try {
               // Send request to the backend to join the group
@@ -178,16 +181,21 @@
                 headers: {
                   "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ groupCode: this.groupCode }),
+                body: JSON.stringify({
+                  email,
+                  groupName: this.groupName,
+                }),
               });
 
               if (!response.ok) {
+                console.log(sessionStorage.getItem("group"));
+                console.log(sessionStorage.getItem("userNow"));
+
                 const data = await response.json();
                 this.errorMessage = data.message || "Failed to join the group.";
                 return;
               }
 
-              // Redirect to main.html with /activities endpoint
               window.location.href = "/activities";
             } catch (error) {
               console.error("Error joining group:", error);

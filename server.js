@@ -65,13 +65,15 @@ app.get("/activity", async (req, res) => {
   }
 });
 
-app.get("/api/group", async (req, res) => {
+app.post("/api/current", async (req, res) => {
+  const { email } = req.body;
+
   try {
-    const group = await Groups.findOne(); // cari findOne nama user
-    if (!group) {
+    const user = await Users.findOne({ email }); // cari findOne nama user
+    if (!user) {
       return res.status(404).json({ message: "Group not found." });
     }
-    res.status(200).json({ groupName: group.name });
+    res.status(200).json({ groupName: user.groupName, name: user.name });
   } catch (error) {
     console.error("Error fetching group name:", error);
     res.status(500).json({ message: "Internal server error." });
@@ -234,8 +236,8 @@ app.post("/join", async (req, res) => {
     } else {
       return res.status(404).json({ message: "Please log in first." });
     }
+    res.status(201).json({ message: "Group joined successfully!" });
 
-    console.log("Successfully joined the group:", groupName );
   } catch (error) {
     console.error("Error joining group:", error);
     res.status(500).json({ message: "Internal server error." });
@@ -275,8 +277,6 @@ app.post("/create", async (req, res) => {
 
     const newGroup = new Groups({
       name: groupName,
-      createdBy: req.session.user._id, 
-      members: [req.session.user._id], 
     });
 
     const user = await Users.findOne({ email }); // Assuming email identifies the user
@@ -287,7 +287,7 @@ app.post("/create", async (req, res) => {
     user.groupName = groupName;
     await user.save();
 
-    res.status(201).json({ message: "Group created successfully", group });
+    res.status(201).json({ message: "Group created successfully!"});
   } catch (error) {
     res.status(500).json({ message: "Internal server error." });
   }

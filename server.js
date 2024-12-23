@@ -170,7 +170,12 @@ app.post("/register", async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new Users({ name, email, password: hashedPassword, profilePicture });
+    const newUser = new Users({
+      name,
+      email,
+      password: hashedPassword,
+      profilePicture,
+    });
     await newUser.save();
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
@@ -237,7 +242,6 @@ app.post("/join", async (req, res) => {
   }
 });
 
-
 app.get("/activity", async (req, res) => {
   try {
     // Fetch activities from the database (customize query as needed)
@@ -269,8 +273,10 @@ app.post("/create", async (req, res) => {
       return res.status(400).json({ message: "Group name is already taken." });
     }
 
-    const group = new Groups({
+    const newGroup = new Groups({
       name: groupName,
+      createdBy: req.session.user._id, 
+      members: [req.session.user._id], 
     });
 
     const user = await Users.findOne({ email }); // Assuming email identifies the user
@@ -358,31 +364,28 @@ app.post("/addCat", async (req, res) => {
   }
 });
 
-const MemberProfileSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    profilePicture: {
-      type: String,
-      default: "", // URL to the profile picture
-    },
-    password: {
-      type: String,
-      required: true, // Make this required if it's mandatory for all profiles
-      minlength: 6, // Optional: enforce a minimum length for password
-    },
+const MemberProfileSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
   },
-);
-
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+  profilePicture: {
+    type: String,
+    default: "", // URL to the profile picture
+  },
+  password: {
+    type: String,
+    required: true, // Make this required if it's mandatory for all profiles
+    minlength: 6, // Optional: enforce a minimum length for password
+  },
+});
 
 const memberProfileSchema = new mongoose.Schema({
   name: { type: String, required: true },

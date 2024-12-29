@@ -205,12 +205,12 @@
         <input type="datetime-local" id="deadline" />
       </div>
 
-      <div>
+      <!-- <div>
         <label for="category">Category</label>
         <select id="category">
           <option value="" disabled selected>Select Category</option>
         </select>
-      </div>
+      </div> -->
 
       <div>
         <label for="note">Note</label>
@@ -235,53 +235,53 @@
           messageBox.style.display = "none";
         }, 5000);
       }
-      // Function to fetch categories from the backend and populate the select dropdown
-      function populateCategories() {
-        fetch("/categories") // Fetch categories from the server
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then((data) => {
-            console.log("Categories fetched:", data);
-            const categorySelect = document.getElementById("category");
-            categorySelect.innerHTML =
-              '<option value="" disabled selected>Select Category</option>';
+      // // Function to fetch categories from the backend and populate the select dropdown
+      // function populateCategories() {
+      //   fetch("/categories") // Fetch categories from the server
+      //     .then((response) => {
+      //       if (!response.ok) {
+      //         throw new Error(`HTTP error! Status: ${response.status}`);
+      //       }
+      //       return response.json();
+      //     })
+      //     .then((data) => {
+      //       console.log("Categories fetched:", data);
+      //       const categorySelect = document.getElementById("category");
+      //       categorySelect.innerHTML =
+      //         '<option value="" disabled selected>Select Category</option>';
 
-            // Populate the dropdown with fetched categories
-            data.forEach((category) => {
-              if (category && category.name && category.color) {
-                const option = document.createElement("option");
-                option.value = category.name; // Set the category name as the value
-                option.textContent = category.name; // Display the category name
-                option.style.backgroundColor = category.color; // Add category color as background
-                categorySelect.appendChild(option);
-              } else {
-                console.error("Invalid category format:", category);
-              }
-            });
-          })
-          .catch((error) => {
-            console.error("Error fetching categories:", error);
-            showMessage(
-              "Unable to fetch categories. Please try again later.",
-              "error"
-            );
-          });
-      }
+      //       // Populate the dropdown with fetched categories
+      //       data.forEach((category) => {
+      //         if (category && category.name && category.color) {
+      //           const option = document.createElement("option");
+      //           option.value = category.name; // Set the category name as the value
+      //           option.textContent = category.name; // Display the category name
+      //           option.style.backgroundColor = category.color; // Add category color as background
+      //           categorySelect.appendChild(option);
+      //         } else {
+      //           console.error("Invalid category format:", category);
+      //         }
+      //       });
+      //     })
+      //     .catch((error) => {
+      //       console.error("Error fetching categories:", error);
+      //       showMessage(
+      //         "Unable to fetch categories. Please try again later.",
+      //         "error"
+      //       );
+      //     });
+      // }
 
       // Populate categories when the page loads
       // document.addEventListener("DOMContentLoaded", populateCategories);
 
       // Function to clear all form input fields
-      function clearFormFields() {
-        document.getElementById("activityName").value = "";
-        document.getElementById("deadline").value = "";
-        document.getElementById("category").value = "";
-        document.getElementById("note").value = "";
-      }
+      // function clearFormFields() {
+      //   document.getElementById("activityName").value = "";
+      //   document.getElementById("deadline").value = "";
+      //   // document.getElementById("category").value = "";
+      //   document.getElementById("note").value = "";
+      // }
 
       // Add event listener for saving activity
       document.getElementById("saveChanges").addEventListener("click", () => {
@@ -289,27 +289,37 @@
           .getElementById("activityName")
           .value.trim();
         const deadline = document.getElementById("deadline").value;
-        const category = document.getElementById("category").value;
+        // const category = document.getElementById("category").value;
         const note = document.getElementById("note").value.trim();
 
-        if (!activityName || !deadline || !category) {
+        if (!activityName || !deadline ) {
           showMessage("Please fill in all required fields.", "error");
           return;
         }
 
+        const email = JSON.parse(sessionStorage.getItem("userNow"));
+
         const activityData = {
           activityName,
           deadline,
-          category,
           note,
+          isCompleted,
+          email,
         };
+
 
         fetch("/addAct", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(activityData),
+          body: JSON.stringify({
+            activityName: this.activityName,
+            deadline: this.deadline,
+            note: this.note,
+            isCompleted: this.isCompleted,
+            email,
+          }),
         })
           .then((response) => {
             if (!response.ok) {
@@ -331,8 +341,8 @@
               "error"
             );
           });
-      });
-      document.addEventListener("DOMContentLoaded", populateCategories);
+        });
+      // document.addEventListener("DOMContentLoaded", populateCategories);
     </script>
   </body>
 </html>

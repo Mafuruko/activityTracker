@@ -99,9 +99,9 @@ const groupSchema = new mongoose.Schema({
     trim: true,
     maxlength: 50,
   },
-  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  createdAt: { type: Date, default: Date.now },
+  // members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  // createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  // createdAt: { type: Date, default: Date.now },
 });
 
 const Groups = mongoose.model("Group", groupSchema);
@@ -109,9 +109,9 @@ const Groups = mongoose.model("Group", groupSchema);
 const activitySchema = new mongoose.Schema({
   activityName: { type: String, required: true, trim: true },
   deadline: { type: Date, required: true },
-  category: { type: String, required: true, trim: true },
   note: { type: String, trim: true, default: "" },
   isCompleted: { type: Boolean, default: false },
+  userNow: { type: String, default: "" },
 });
 
 const Activity = mongoose.model("Activity", activitySchema);
@@ -154,13 +154,9 @@ app.get("/editprofile", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "editprofile.html"));
 });
 
-app.get("/addAct", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "addActivity.html"));
-});
-
-app.get("/addCat", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "addCategory.html"));
-});
+// app.get("/addCat", (req, res) => {
+//   res.sendFile(path.join(__dirname, "frontend", "addCategory.html"));
+// });
 
 // Register User
 app.post("/register", async (req, res) => {
@@ -270,7 +266,7 @@ app.post("/create", async (req, res) => {
   }
 
   try {
-    const existingGroup = await Users.findOne({ name: groupName });
+    const existingGroup = await Groups.findOne({ name: groupName });
     if (existingGroup) {
       return res.status(400).json({ message: "Group name is already taken." });
     }
@@ -286,6 +282,8 @@ app.post("/create", async (req, res) => {
 
     user.groupName = groupName;
     await user.save();
+    await newGroup.save();
+
 
     res.status(201).json({ message: "Group created successfully!"});
   } catch (error) {
@@ -306,20 +304,24 @@ app.get("/addAct", (req, res) => {
 });
 
 app.post("/addAct", async (req, res) => {
-  const { activityName, deadline, category, note } = req.body;
+  const { activityName, deadline, note, isCompleted, email } = req.body;
 
-  if (!activityName || !deadline || !category) {
+  console.log("Received session data:", email);
+
+  if (!activityName || !deadline ) {
     return res
       .status(400)
       .json({ message: "Please fill in all required fields." });
   }
 
   try {
+    
     const newActivity = new Activity({
       activityName,
       deadline,
-      category,
       note,
+      isCompleted,
+      email,
     });
     const savedActivity = await newActivity.save();
 
@@ -333,36 +335,36 @@ app.post("/addAct", async (req, res) => {
   }
 });
 
-// Add Category
-app.post("/addCat", async (req, res) => {
-  const { categoryName, categoryColor } = req.body;
+// // Add Category
+// app.post("/addCat", async (req, res) => {
+//   const { categoryName, categoryColor } = req.body;
 
-  if (!categoryName || !categoryColor) {
-    return res
-      .status(400)
-      .json({ message: "Category name and color are required." });
-  }
+//   if (!categoryName || !categoryColor) {
+//     return res
+//       .status(400)
+//       .json({ message: "Category name and color are required." });
+//   }
 
-  try {
-    const existingCategory = await Category.findOne({ name: categoryName });
-    if (existingCategory) {
-      return res.status(400).json({ message: "Category already exists." });
-    }
+//   try {
+//     const existingCategory = await Category.findOne({ name: categoryName });
+//     if (existingCategory) {
+//       return res.status(400).json({ message: "Category already exists." });
+//     }
 
-    const newCategory = new Category({
-      name: categoryName,
-      color: categoryColor,
-    });
-    await newCategory.save();
+//     const newCategory = new Category({
+//       name: categoryName,
+//       color: categoryColor,
+//     });
+//     await newCategory.save();
 
-    res
-      .status(201)
-      .json({ message: "Category added successfully!", category: newCategory });
-  } catch (error) {
-    console.error("Error adding category:", error);
-    res.status(500).json({ message: "Internal server error." });
-  }
-});
+//     res
+//       .status(201)
+//       .json({ message: "Category added successfully!", category: newCategory });
+//   } catch (error) {
+//     console.error("Error adding category:", error);
+//     res.status(500).json({ message: "Internal server error." });
+//   }
+// });
 
 const MemberProfileSchema = new mongoose.Schema({
   name: {

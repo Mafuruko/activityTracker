@@ -191,7 +191,7 @@
         <a href="/profile"><i class="fas fa-user-circle"></i></a>
         <a href="/addAct">Add Activity</a>
         <!-- <a href="#">Sort By</a> -->
-        <a href="/addCat ">Add Category</a>
+        <!-- <a href="/addCat ">Add Category</a> -->
         <span class="group-name">Group Name: {{ groupName }}</span>
       </div>
 
@@ -297,78 +297,6 @@
           </div>
         </div>
       </div>
-
-      <!-- <div class="activity-container">
-        <div
-          class="activity-card"
-          v-for="(user, index) in users"
-          :class="{ 'main-card': index === 1 }"
-          :key="user.name"
-        >
-          <img
-            src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
-            alt="User Avatar"
-            class="profile-image"
-          />
-          <h2>{{ user.name }}</h2>
-          <div
-            class="activity-section"
-            v-for="(activities, category) in user.activities"
-            :key="category"
-          >
-            <h3>{{ categorizeActivities(activities[0]?.date) }}</h3>
-            <div
-              v-for="activity in activities"
-              :key="activity.title"
-              class="activity"
-              :class="activity.status"
-            >
-              <div class="activity-title">{{ activity.title }}</div>
-              <div class="activity-time">
-                <span>{{ activity.date }} - {{ activity.time }}</span>
-                <input
-                  type="checkbox"
-                  :checked="activity.status === 'completed'"
-                  :disabled="index !== 1"
-                  @change="toggleComplete(activity)"
-                />
-              </div>
-            </div>
-          </div>
-        </div> -->
-
-      <!-- <div class="activity-card main-card">
-          <img
-            src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
-            alt="User Avatar"
-            class="profile-image"
-          />
-          <h2>{{ users[1].name }}</h2>
-          <div
-            class="activity-section"
-            v-for="(activities, category) in users[1].activities"
-            :key="category"
-          >
-            <h3>{{ category }}</h3>
-            <div
-              v-for="activity in activities"
-              :key="activity.title"
-              class="activity"
-              :class="activity.status"
-            >
-              <div class="activity-title">{{ activity.title }}</div>
-              <div class="activity-time">
-                <span>{{ activity.date }} - {{ activity.time }}</span>
-                <input
-                  type="checkbox"
-                  v-model="activity.status"
-                  @change="toggleComplete(activity)"
-                />
-              </div>
-            </div>
-          </div>
-        </div> -->
-      <!-- </div> -->
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>

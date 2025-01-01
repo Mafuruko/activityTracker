@@ -96,22 +96,6 @@
         text-align: left;
         transition: all 0.3s ease;
         margin: 10px;
-        order: 1;
-      }
-
-      /* Larger Center Card Styling */
-      .activity-card.main-card {
-        width: 300px;
-        transform: scale(1.1);
-        order: 2;
-      }
-
-      .activity-container .activity-card:nth-child(1) {
-        order: 1; /* "Nama User 1" comes first */
-      }
-
-      .activity-container .activity-card:nth-child(3) {
-        order: 3; /* "Nama User 2" comes last */
       }
 
       .activity-card h2 {
@@ -144,38 +128,6 @@
         font-size: 0.9rem;
       }
 
-      /* Color-coding for activity blocks */
-      .activity.overdue {
-        background-color: #ffb6c1;
-      }
-
-      .activity.today {
-        background-color: #ffffe0;
-      }
-
-      .activity.future {
-        background-color: #bdf1f6;
-      }
-
-      .activity.completed {
-        background-color: #e0ffe0;
-        text-decoration: line-through;
-      }
-
-      .activity-title {
-        text-align: left;
-        font-weight: bold;
-      }
-
-      /* Date-Time and Checkbox */
-      .activity-time {
-        font-size: 0.8rem;
-        color: #555;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
       /* Profile Image */
       .profile-image {
         width: 50px;
@@ -185,13 +137,10 @@
     </style>
   </head>
   <body>
-    <!-- Vue Application Root -->
     <div id="app" class="main-wrapper">
       <div class="navbar">
-        <a href="/profile"><i class="fas fa-user-circle"></i></a>
+        <a href="/editprofile"><i class="fas fa-user-circle"></i></a>
         <a href="/addAct">Add Activity</a>
-        <!-- <a href="#">Sort By</a> -->
-        <!-- <a href="/addCat ">Add Category</a> -->
         <span class="group-name">Group Name: {{ groupName }}</span>
       </div>
 
@@ -201,9 +150,8 @@
       <div class="activity-container">
         <div
           class="activity-card"
-          v-for="(user, index) in groupedActivities"
+          v-for="user in otherGroupMembers"
           :key="user.name"
-          :class="{ 'main-card': index === 1 }"
         >
           <img
             src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
@@ -212,87 +160,10 @@
           />
           <h2>{{ user.name }}</h2>
 
-          <!-- Overdue Activities -->
-          <div v-if="user.grouped.overdue.length" class="activity-section">
-            <h3>Overdue</h3>
-            <div
-              v-for="activity in user.grouped.overdue"
-              :key="activity.title"
-              class="activity overdue"
-            >
-              <div class="activity-title">{{ activity.title }}</div>
-              <div class="activity-time">
-                <span>{{ activity.date }} - {{ activity.time }}</span>
-                <input
-                  type="checkbox"
-                  :checked="activity.status === 'completed'"
-                  :disabled="user.name !== 'User Now'"
-                  @change="toggleComplete(activity)"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Today's Activities -->
-          <div v-if="user.grouped.today.length" class="activity-section">
-            <h3>Today</h3>
-            <div
-              v-for="activity in user.grouped.today"
-              :key="activity.title"
-              class="activity today"
-            >
-              <div class="activity-title">{{ activity.title }}</div>
-              <div class="activity-time">
-                <span>{{ activity.date }} - {{ activity.time }}</span>
-                <input
-                  type="checkbox"
-                  :checked="activity.status === 'completed'"
-                  :disabled="user.name !== 'User Now'"
-                  @change="toggleComplete(activity)"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Future Activities -->
-          <div v-if="user.grouped.future.length" class="activity-section">
-            <h3>Future</h3>
-            <div
-              v-for="activity in user.grouped.future"
-              :key="activity.title"
-              class="activity future"
-            >
-              <div class="activity-title">{{ activity.title }}</div>
-              <div class="activity-time">
-                <span>{{ activity.date }} - {{ activity.time }}</span>
-                <input
-                  type="checkbox"
-                  :checked="activity.status === 'completed'"
-                  :disabled="user.name !== 'User Now'"
-                  @change="toggleComplete(activity)"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Completed Activities -->
-          <div v-if="user.grouped.completed.length" class="activity-section">
-            <h3>Completed</h3>
-            <div
-              v-for="activity in user.grouped.completed"
-              :key="activity.title"
-              class="activity completed"
-            >
-              <div class="activity-title">{{ activity.title }}</div>
-              <div class="activity-time">
-                <span>{{ activity.date }} - {{ activity.time }}</span>
-                <input
-                  type="checkbox"
-                  :checked="activity.status === 'completed'"
-                  :disabled="user.name !== 'User Now'"
-                  @change="toggleComplete(activity)"
-                />
-              </div>
+          <div v-for="activity in user.activities" :key="activity.title" class="activity">
+            <div class="activity-title">{{ activity.title }}</div>
+            <div class="activity-time">
+              <span>{{ activity.date }} - {{ activity.time }}</span>
             </div>
           </div>
         </div>
@@ -306,77 +177,12 @@
         data: {
           groupName: "",
           currentUser: "",
-          users: [
-            {
-              name: "Nama User 1",
-              activities: [
-                {
-                  title: "Wake up",
-                  date: "2024-06-17",
-                  time: "08:00",
-                  status: "future",
-                },
-              ],
-            },
-            {
-              name: "User Now",
-              activities: [],
-            },
-            {
-              name: "Nama User 2",
-              activities: [
-                {
-                  title: "Meeting",
-                  date: "2024-06-10",
-                  time: "10:00",
-                  status: "future",
-                },
-                {
-                  title: "Lunch",
-                  date: "2024-06-20",
-                  time: "12:30",
-                  status: "future",
-                },
-              ],
-            },
-          ],
-          newActivity: { title: "", date: "", time: "", status: "future" },
+          users: [],
         },
         computed: {
-          // Compute activities grouped into overdue, today, future, completed
-          groupedActivities() {
-            const today = new Date().setHours(0, 0, 0, 0);
-
-            return this.users.map((user) => {
-              // Group activities for this user only
-              const activities = {
-                overdue: [],
-                today: [],
-                future: [],
-                completed: [],
-              };
-
-              user.activities.forEach((activity) => {
-                const activityDate = new Date(activity.date).setHours(
-                  0,
-                  0,
-                  0,
-                  0
-                );
-
-                if (activity.status === "completed") {
-                  activities.completed.push(activity);
-                } else if (activityDate < today) {
-                  activities.overdue.push(activity);
-                } else if (activityDate === today) {
-                  activities.today.push(activity);
-                } else {
-                  activities.future.push(activity);
-                }
-              });
-
-              return { ...user, grouped: activities };
-            });
+          // Filter out the current user's card
+          otherGroupMembers() {
+            return this.users.filter((user) => user.name !== this.currentUser);
           },
         },
         methods: {
@@ -389,9 +195,7 @@
                 headers: {
                   "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                  email,
-                }),
+                body: JSON.stringify({ email }),
               });
 
               const data = await response.json();
@@ -406,97 +210,23 @@
             }
           },
 
-          async fetchActivities() {
+          async fetchUsers() {
             try {
-              const response = await fetch("/activity"); // Ensure this is awaited
+              const response = await fetch("/api/groupMembers");
               const data = await response.json();
               if (response.ok) {
-                // Map activities to the "User Now" object in users array
-                const userNow = this.users.find(
-                  (user) => user.name === "User Now"
-                );
-                userNow.activities = data.map((activity) => ({
-                  title: activity.activityName,
-                  date: activity.deadline.split("T")[0],
-                  time: activity.deadline.split("T")[1]?.slice(0, 5) || "00:00",
-                  status: activity.isCompleted ? "completed" : "future",
-                }));
+                this.users = data;
               } else {
-                console.error("Error fetching activities:", data.message);
+                console.error("Error fetching users:", data.message);
               }
             } catch (error) {
-              console.error("Unexpected error fetching activities:", error);
+              console.error("Unexpected error fetching users:", error);
             }
           },
-
-          addActivity() {
-            const title = prompt("Enter activity title:");
-            const date = prompt("Enter date (YYYY-MM-DD):");
-            const time = prompt("Enter time (HH:mm):");
-
-            if (title && date && time) {
-              const newActivity = { title, date, time, status: "future" };
-              this.users[1].activities.push(newActivity);
-              localStorage.setItem(
-                "userNowActivities",
-                JSON.stringify(this.users[1].activities)
-              );
-            }
-          },
-
-          toggleComplete(activity) {
-            activity.status =
-              activity.status === "completed" ? "future" : "completed";
-          },
-          // async toggleComplete(activity) {
-          //   // Optimistically update the UI
-          //   activity.status =
-          //     activity.status === "completed" ? "future" : "completed";
-
-          //   // Send the status update to the backend
-          //   try {
-          //     const response = await fetch(`/activity/${activity._id}`, {
-          //       method: "PATCH",
-          //       headers: {
-          //         "Content-Type": "application/json",
-          //       },
-          //       body: JSON.stringify({
-          //         isCompleted: activity.status === "completed",
-          //       }),
-          //     });
-
-          //     if (!response.ok) {
-          //       console.error(
-          //         "Failed to update activity status:",
-          //         await response.json()
-          //       );
-          //     }
-          //   } catch (error) {
-          //     console.error("Unexpected error updating activity:", error);
-          //   }
-          // },
-          // toggleComplete(activity) {
-          //   activity.status =
-          //     activity.status === "completed" ? "future" : "completed";
-          //   localStorage.setItem(
-          //     "userNowActivities",
-          //     JSON.stringify(this.users[1].activities)
-          //   );
-          // },
-        },
-        mounted() {
-          const savedActivities = JSON.parse(
-            localStorage.getItem("userNowActivities")
-          );
-          if (savedActivities) this.users[1].activities = savedActivities;
         },
         created() {
-          this.fetchCurrent(); // Fetch group name when the component is created
-        },
-
-        mounted() {
           this.fetchCurrent();
-          this.fetchActivities();
+          this.fetchUsers();
         },
       });
     </script>

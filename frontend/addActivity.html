@@ -223,6 +223,17 @@
     </div>
 
     <script>
+      function clearFormFields() {
+        document.getElementById("activityName").value = "";
+        document.getElementById("deadline").value = "";
+        document.getElementById("note").value = "";
+        // If you have an `isCompleted` checkbox or other inputs, reset them as well:
+        const isCompletedCheckbox = document.getElementById("isCompleted");
+        if (isCompletedCheckbox) {
+          isCompletedCheckbox.checked = false;
+        }
+      }
+
       function showMessage(message, type = "success") {
         const messageBox = document.getElementById("messageBox");
         messageBox.textContent = message;
@@ -275,14 +286,6 @@
       // Populate categories when the page loads
       // document.addEventListener("DOMContentLoaded", populateCategories);
 
-      // Function to clear all form input fields
-      // function clearFormFields() {
-      //   document.getElementById("activityName").value = "";
-      //   document.getElementById("deadline").value = "";
-      //   // document.getElementById("category").value = "";
-      //   document.getElementById("note").value = "";
-      // }
-
       // Add event listener for saving activity
       document.getElementById("saveChanges").addEventListener("click", () => {
         const activityName = document
@@ -291,20 +294,21 @@
         const deadline = document.getElementById("deadline").value;
         // const category = document.getElementById("category").value;
         const note = document.getElementById("note").value.trim();
+        const userNow = JSON.parse(sessionStorage.getItem("userNow"));
+        const isCompleted = false; // Default value for isCompleted
+
 
         if (!activityName || !deadline ) {
           showMessage("Please fill in all required fields.", "error");
           return;
         }
 
-        const email = JSON.parse(sessionStorage.getItem("userNow"));
-
         const activityData = {
           activityName,
           deadline,
           note,
           isCompleted,
-          email,
+          userNow,
         };
 
 
@@ -313,13 +317,7 @@
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            activityName: this.activityName,
-            deadline: this.deadline,
-            note: this.note,
-            isCompleted: this.isCompleted,
-            email,
-          }),
+          body: JSON.stringify(activityData),
         })
           .then((response) => {
             if (!response.ok) {

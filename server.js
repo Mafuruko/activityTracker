@@ -73,7 +73,7 @@ app.post("/api/current", async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "Group not found." });
     }
-    res.status(200).json({ groupName: user.groupName, name: user.name });
+    res.status(200).json({ email: user.email, groupName: user.groupName, name: user.name });
   } catch (error) {
     console.error("Error fetching group name:", error);
     res.status(500).json({ message: "Internal server error." });
@@ -85,7 +85,6 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  profilePicture: { type: String, default: "" },
   groupName: { type: String, default: "" },
 });
 
@@ -150,17 +149,10 @@ app.get("/activities", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "main.html"));
 });
 
-app.get("/editprofile", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "editprofile.html"));
-});
-
-// app.get("/addCat", (req, res) => {
-//   res.sendFile(path.join(__dirname, "frontend", "addCategory.html"));
-// });
 
 // Register User
 app.post("/register", async (req, res) => {
-  const { name, email, password, profilePicture } = req.body;
+  const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ error: "All fields are required" });
@@ -172,7 +164,6 @@ app.post("/register", async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      profilePicture,
     });
     await newUser.save();
     res.status(201).json({ message: "User registered successfully" });
@@ -295,8 +286,8 @@ app.get("/activities", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "main.html"));
 });
 
-app.get("/profile", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "profile.html"));
+app.get("/editprofile", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "editprofile.html"));
 });
 
 app.get("/addAct", (req, res) => {
@@ -304,9 +295,9 @@ app.get("/addAct", (req, res) => {
 });
 
 app.post("/addAct", async (req, res) => {
-  const { activityName, deadline, note, isCompleted, email } = req.body;
+  const { activityName, deadline, note, isCompleted, userNow } = req.body;
 
-  console.log("Received session data:", email);
+  console.log("Received session data:", userNow);
 
   if (!activityName || !deadline ) {
     return res
@@ -321,7 +312,7 @@ app.post("/addAct", async (req, res) => {
       deadline,
       note,
       isCompleted,
-      email,
+      userNow,
     });
     const savedActivity = await newActivity.save();
 
@@ -378,10 +369,6 @@ const MemberProfileSchema = new mongoose.Schema({
     unique: true,
     trim: true,
   },
-  profilePicture: {
-    type: String,
-    default: "", // URL to the profile picture
-  },
   password: {
     type: String,
     required: true, // Make this required if it's mandatory for all profiles
@@ -389,34 +376,20 @@ const MemberProfileSchema = new mongoose.Schema({
   },
 });
 
-const memberProfileSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  profilePicture: { type: String },
-  password: { type: String },
-});
-
-const MemberProfile = mongoose.model("MemberProfile", memberProfileSchema);
-
-app.post("/upload", upload.single("profilePicture"), (req, res) => {
-  res.status(200).json({ filePath: req.file.path });
-});
-
 app.post("/editprofile", async (req, res) => {
-  const { name, email, profilePicture, password } = req.body;
+  const { userNow, name, password } = req.body;
 
-  if (!name || !email) {
+  if (!name) {
     return res.status(400).json({ message: "Name and email are required." });
   }
 
   try {
-    const user = await Users.findOne({ email }); // Assuming email identifies the user
+    const user = await Users.findOne({ userNow }); // Assuming email identifies the user
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
 
     user.name = name;
-    user.profilePicture = profilePicture;
 
     if (password) {
       user.password = await bcrypt.hash(password, 10);

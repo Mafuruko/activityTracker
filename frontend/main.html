@@ -143,11 +143,11 @@
         <a href="/addAct">Add Activity</a>
         <span class="group-name">Group Name: {{ groupName }}</span>
       </div>
-
+    
       <h1 style="font-size: 2rem; color: #000; margin-bottom: 20px">
         {{ groupName }}'s Activity
       </h1>
-
+    
       <!-- Current User's Activity Card -->
       <div class="activity-container">
         <div class="activity-card" v-if="currentUserActivities.length">
@@ -157,17 +157,12 @@
             :key="activity.name"
             class="activity"
           >
-            <!-- Activity Name -->
             <div class="activity-name" style="flex: 1; text-align: left">
               {{ activity.name }}
             </div>
-
-            <!-- Activity Deadline -->
             <div class="activity-deadline" style="flex: 1; text-align: center">
               {{ formatDate(activity.deadline) }}
             </div>
-
-            <!-- Completion Checkbox -->
             <div class="activity-checkbox" style="flex: 1; text-align: right">
               <input
                 type="checkbox"
@@ -177,24 +172,33 @@
             </div>
           </div>
         </div>
-
-        <!-- Other Group Members' Activity Cards -->
+      </div>
+    
+      <!-- Paginated Other Members' Activity Cards -->
+      <div class="activity-container">
         <div
           class="activity-card"
-          v-for="user in otherGroupMembers"
+          v-for="user in paginatedUsers"
           :key="user.name"
         >
           <h2>{{ user.name }}</h2>
           <div v-for="activity in user.activities" :key="activity.name" class="activity">
             <div class="activity-name">{{ activity.name }}</div>
             <div class="activity-deadline">
-              <span>{{ activity.deadline }}</span>
+              <span>{{ formatDate(activity.deadline) }}</span>
             </div>
           </div>
         </div>
       </div>
+    
+      <!-- Pagination Controls -->
+      <div class="pagination" v-if="totalPages > 1">
+        <button @click="currentPage--" :disabled="currentPage === 1">Previous</button>
+        <span>Page {{ currentPage }} of {{ totalPages }}</span>
+        <button @click="currentPage++" :disabled="currentPage === totalPages">Next</button>
+      </div>
     </div>
-
+    
     <script>
       new Vue({
         el: "#app",
@@ -203,19 +207,22 @@
           currentUser: "",
           currentUserActivities: [],
           users: [],
+          currentPage: 1,
+          usersPerPage: 5,
         },
         computed: {
-          // Filter out the current user's card
-          otherGroupMembers() {
-            return this.users.filter((user) => user.name !== this.currentUser);
+          paginatedUsers() {
+            const start = (this.currentPage - 1) * this.usersPerPage;
+            return this.users.slice(start, start + this.usersPerPage);
+          },
+          totalPages() {
+            return Math.ceil(this.users.length / this.usersPerPage);
           },
         },
         methods: {
-          
           async fetchCurrent() {
             try {
               const email = JSON.parse(sessionStorage.getItem("userNow"));
-
               const response = await fetch("/api/current", {
                 method: "POST",
                 headers: {
@@ -223,68 +230,63 @@
                 },
                 body: JSON.stringify({ email }),
               });
-
+    
               const data = await response.json();
-              console.log(data);
               if (response.ok) {
-                console.log(sessionStorage.getItem("userNow"));
-
                 this.groupName = data.groupName;
                 this.currentUser = data.name;
                 this.currentUserActivities = data.activities || [];
               } else {
-                console.error("Error fetching user data:", data.message);
+                console.error("Error fetching current user data:", data.message);
               }
             } catch (error) {
-              console.error("Unexpected error fetching user data:", error);
+              console.error("Unexpected error fetching current user data:", error);
             }
           },
-
-          async markAsCompleted(activity) {
-          try {
-            activity.isCompleted = !activity.isCompleted; // Toggle the completion status
-            const response = await fetch("/api/markCompleted", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                activityId: activity.name, // Send the unique ID of the activity
-                isCompleted: activity.isCompleted,
-              }),
-            });
-
-            if (!response.ok) {
-              console.error("Failed to update completion status");
-              activity.isCompleted = !activity.isCompleted; // Revert if error occurs
+          async fetchGroupMembers() {
+            try {
+              const response = await fetch("/api/groupMembers");
+              const data = await response.json();
+              if (response.ok) {
+                this.users = data.filter((user) => user.name !== this.currentUser);
+              } else {
+                console.error("Error fetching group members:", data.message);
+              }
+            } catch (error) {
+              console.error("Unexpected error fetching group members:", error);
             }
-          } catch (error) {
-            console.error("Error updating completion status:", error);
-          }
-        },
-        formatDate(deadline) {
-          return new Date(deadline).toLocaleDateString(); // Extract and format the date
-        },
-
-          // async fetchUsers() {
-          //   try {
-          //     const response = await fetch("/api/groupMembers");
-          //     const data = await response.json();
-          //     if (response.ok) {
-          //       this.users = data;
-          //     } else {
-          //       console.error("Error fetching users:", data.message);
-          //     }
-          //   } catch (error) {
-          //     console.error("Unexpected error fetching users:", error);
-          //   }
-          // },
+          },
+          formatDate(deadline) {
+            return new Date(deadline).toLocaleDateString();
+          },
+          async markAsCompleted(activity) {
+            try {
+              activity.isCompleted = !activity.isCompleted; // Toggle the completion status
+              const response = await fetch("/api/markCompleted", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  activityId: activity.name,
+                  isCompleted: activity.isCompleted,
+                }),
+              });
+    
+              if (!response.ok) {
+                console.error("Failed to update completion status");
+                activity.isCompleted = !activity.isCompleted; // Revert if error occurs
+              }
+            } catch (error) {
+              console.error("Error updating completion status:", error);
+            }
+          },
         },
         created() {
           this.fetchCurrent();
-          // this.fetchUsers();
+          this.fetchGroupMembers();
         },
       });
-    </script>
+    </script>    
   </body>
 </html>

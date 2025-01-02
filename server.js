@@ -57,6 +57,38 @@ app.post("/api/current", async (req, res) => {
   }
 });
 
+app.post("/api/groupMembers", async (req, res) => {
+  try {
+    const currentUserEmail = req.body.email; // Ensure the client's email is passed
+    const currentUser = await Users.findOne({ email: currentUserEmail });
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "Current user not found." });
+    }
+
+    const groupMembers = await Users.find({ groupName: currentUser.groupName });
+    const memberActivities = await Promise.all(
+      groupMembers.map(async (member) => {
+        const activities = await Activity.find({ userNow: member.email });
+        return {
+          name: member.name,
+          activities: activities.map((activity) => ({
+            name: activity.activityName,
+            deadline: activity.deadline,
+            isCompleted: activity.isCompleted,
+          })),
+        };
+      })
+    );
+
+    res.status(200).json(memberActivities);
+  } catch (error) {
+    console.error("Error fetching group members' activities:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+
 app.post("/api/markCompleted", async (req, res) => {
   const { activityId, isCompleted } = req.body;
 
@@ -187,6 +219,9 @@ app.post("/join", async (req, res) => {
 
       if (!group) {
         return res.status(400).json({ message: "You are not a member of this group." });
+      } else {
+        user.groupName = groupName;
+        await user.save();
       }
     } else {
       return res.status(404).json({ message: "Please log in first." });

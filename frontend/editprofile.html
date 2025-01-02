@@ -150,6 +150,14 @@
       .logout-btn:hover {
         background-color: #cc0000;
       }
+      #messageBox {
+        margin-bottom: 20px;
+        text-align: center;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 1rem;
+        display: none; /* Initially hidden */
+      }
     </style>
   </head>
   <body>
@@ -160,6 +168,11 @@
         <a href="/activities"> <i class="fa-solid fa-arrow-left"></i></a>
         <button id="logout-btn" class="logout-btn">Logout</button>
       </div>
+
+      <div
+        id="messageBox"
+        style="display: none; background-color: #e3f3f5; color: #333"
+      ></div>
 
       <!-- Centered Edit Profile Card -->
       <div class="edit-profile-card">
@@ -210,57 +223,38 @@
     </div>
     <script>
       document.addEventListener("DOMContentLoaded", async function () {
-        document.getElementById("logout-btn").addEventListener("click", function () {
-          sessionStorage.clear(); 
-          window.location.href = "/"; 
-        });
-        // Simulate fetching email from user session
-        const emailInput = document.getElementById("email");
-        try {
-          const email = JSON.parse(sessionStorage.getItem("userNow"));
+        const messageBox = document.getElementById("messageBox");
 
-          const response = await fetch("/api/current", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ email }), // Adjust body payload as needed
-          });        
+        document
+          .getElementById("logout-btn")
+          .addEventListener("click", function () {
+            sessionStorage.clear();
+            window.location.href = "/";
+          });
 
-            if (response.ok) {
-            const data = await response.json();
-            emailInput.value = data.email || "user@example.com";
-          } else {
-            throw new Error("Failed to fetch email");
-          }
-        } catch (err) {
-          console.error("Error fetching email:", err);
-          emailInput.value = "Error fetching email";
-        }
-
-        // Handle Save Changes button click
         document
           .getElementById("save-changes")
           .addEventListener("click", async function () {
             const name = document.getElementById("name").value;
+            const password = document.getElementById("password").value;
+            const confirmPassword =
+              document.getElementById("confirm-password").value;
 
             if (!name) {
-              alert("Name is required!");
+              messageBox.textContent = "Name is required!";
+              messageBox.style.display = "block";
+              messageBox.style.backgroundColor = "#ffcccc";
               return;
             }
 
-            const password = document.getElementById("password").value;
-            const confirmPassword = document.getElementById("confirm-password").value;
-
             if (password && password !== confirmPassword) {
-              alert("Passwords do not match!");
+              messageBox.textContent = "Passwords do not match!";
+              messageBox.style.display = "block";
+              messageBox.style.backgroundColor = "#ffcccc";
               return;
             }
 
             const userNow = JSON.parse(sessionStorage.getItem("userNow"));
-
-
-            const userData = { email: userNow, name, password };
 
             try {
               const response = await fetch("/editprofile", {
@@ -268,19 +262,24 @@
                 headers: {
                   "Content-Type": "application/json",
                 },
-                body: JSON.stringify(userData),
+                body: JSON.stringify({ name, password, email: userNow }),
               });
 
+              const data = await response.json();
+
               if (response.ok) {
-                alert("Profile updated successfully!");
-                window.location.href = "/activities";
+                messageBox.textContent = "Profile updated successfully!";
+                messageBox.style.display = "block";
+                messageBox.style.backgroundColor = "#d4edda";
               } else {
-                const error = await response.json();
-                alert(`Error: ${error.error}`);
+                messageBox.textContent = `Error: ${data.error || "Unknown error"}`;
+                messageBox.style.display = "block";
+                messageBox.style.backgroundColor = "#ffcccc";
               }
             } catch (err) {
-              console.error("Error saving profile:", err);
-              alert("An error occurred while saving the profile!");
+              messageBox.textContent = "An error occurred while saving the profile.";
+              messageBox.style.display = "block";
+              messageBox.style.backgroundColor = "#ffcccc";
             }
           });
       });

@@ -147,36 +147,61 @@
       <h1 style="font-size: 2rem; color: #000; margin-bottom: 20px">
         {{ groupName }}'s Activity
       </h1>
+
+      <!-- Current User's Activity Card -->
       <div class="activity-container">
+        <div class="activity-card" v-if="currentUserActivities.length">
+          <h2>{{ currentUser }}</h2>
+          <div
+            v-for="activity in currentUserActivities"
+            :key="activity.name"
+            class="activity"
+          >
+            <!-- Activity Name -->
+            <div class="activity-name" style="flex: 1; text-align: left">
+              {{ activity.name }}
+            </div>
+
+            <!-- Activity Deadline -->
+            <div class="activity-deadline" style="flex: 1; text-align: center">
+              {{ formatDate(activity.deadline) }}
+            </div>
+
+            <!-- Completion Checkbox -->
+            <div class="activity-checkbox" style="flex: 1; text-align: right">
+              <input
+                type="checkbox"
+                :checked="activity.isCompleted"
+                @change="markAsCompleted(activity)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Other Group Members' Activity Cards -->
         <div
           class="activity-card"
           v-for="user in otherGroupMembers"
           :key="user.name"
         >
-          <img
-            src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
-            alt="User Avatar"
-            class="profile-image"
-          />
           <h2>{{ user.name }}</h2>
-
-          <div v-for="activity in user.activities" :key="activity.title" class="activity">
-            <div class="activity-title">{{ activity.title }}</div>
-            <div class="activity-time">
-              <span>{{ activity.date }} - {{ activity.time }}</span>
+          <div v-for="activity in user.activities" :key="activity.name" class="activity">
+            <div class="activity-name">{{ activity.name }}</div>
+            <div class="activity-deadline">
+              <span>{{ activity.deadline }}</span>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
     <script>
       new Vue({
         el: "#app",
         data: {
           groupName: "",
           currentUser: "",
+          currentUserActivities: [],
           users: [],
         },
         computed: {
@@ -186,6 +211,7 @@
           },
         },
         methods: {
+          
           async fetchCurrent() {
             try {
               const email = JSON.parse(sessionStorage.getItem("userNow"));
@@ -199,34 +225,64 @@
               });
 
               const data = await response.json();
+              console.log(data);
               if (response.ok) {
+                console.log(sessionStorage.getItem("userNow"));
+
                 this.groupName = data.groupName;
                 this.currentUser = data.name;
+                this.currentUserActivities = data.activities || [];
               } else {
-                console.error("Error fetching group name:", data.message);
+                console.error("Error fetching user data:", data.message);
               }
             } catch (error) {
-              console.error("Unexpected error fetching group name:", error);
+              console.error("Unexpected error fetching user data:", error);
             }
           },
 
-          async fetchUsers() {
-            try {
-              const response = await fetch("/api/groupMembers");
-              const data = await response.json();
-              if (response.ok) {
-                this.users = data;
-              } else {
-                console.error("Error fetching users:", data.message);
-              }
-            } catch (error) {
-              console.error("Unexpected error fetching users:", error);
+          async markAsCompleted(activity) {
+          try {
+            activity.isCompleted = !activity.isCompleted; // Toggle the completion status
+            const response = await fetch("/api/markCompleted", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                activityId: activity.name, // Send the unique ID of the activity
+                isCompleted: activity.isCompleted,
+              }),
+            });
+
+            if (!response.ok) {
+              console.error("Failed to update completion status");
+              activity.isCompleted = !activity.isCompleted; // Revert if error occurs
             }
-          },
+          } catch (error) {
+            console.error("Error updating completion status:", error);
+          }
+        },
+        formatDate(deadline) {
+          return new Date(deadline).toLocaleDateString(); // Extract and format the date
+        },
+
+          // async fetchUsers() {
+          //   try {
+          //     const response = await fetch("/api/groupMembers");
+          //     const data = await response.json();
+          //     if (response.ok) {
+          //       this.users = data;
+          //     } else {
+          //       console.error("Error fetching users:", data.message);
+          //     }
+          //   } catch (error) {
+          //     console.error("Unexpected error fetching users:", error);
+          //   }
+          // },
         },
         created() {
           this.fetchCurrent();
-          this.fetchUsers();
+          // this.fetchUsers();
         },
       });
     </script>

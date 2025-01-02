@@ -9,7 +9,6 @@ const MongoStore = require("connect-mongo");
 
 const app = express();
 
-// Middleware
 app.use(express.static(path.join(__dirname, "frontend")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -29,58 +28,57 @@ mongoose
     console.error("MongoDB connection error:", err);
   });
 
-// Toggle Activity Completion Status
-app.patch("/activity/:id", async (req, res) => {
-  const { id } = req.params;
-  const { isCompleted } = req.body; // Receive the new status from the request
-
-  try {
-    const activity = await Activity.findById(id);
-    if (!activity) {
-      return res.status(404).json({ message: "Activity not found." });
-    }
-
-    // Update the isCompleted field
-    activity.isCompleted = isCompleted;
-    await activity.save();
-
-    res.status(200).json({
-      message: "Activity status updated successfully.",
-      activity,
-    });
-  } catch (error) {
-    console.error("Error updating activity status:", error);
-    res.status(500).json({ message: "Internal server error." });
-  }
-});
-
-// Fetch all activities
-app.get("/activity", async (req, res) => {
-  try {
-    const activities = await Activity.find();
-    res.status(200).json(activities);
-  } catch (error) {
-    console.error("Error fetching activities:", error);
-    res.status(500).json({ message: "Failed to fetch activities." });
-  }
-});
-
 app.post("/api/current", async (req, res) => {
   const { email } = req.body;
 
+  console.log("Request body:", req.body);
+
   try {
-    const user = await Users.findOne({ email }); // cari findOne nama user
+    const user = await Users.findOne({ email }); 
     if (!user) {
-      return res.status(404).json({ message: "Group not found." });
+      return res.status(404).json({ message: "User not found." });
     }
-    res.status(200).json({ email: user.email, groupName: user.groupName, name: user.name });
+
+    const activities = await Activity.find({ userNow: email });
+
+    res.status(200).json({
+      email: user.email,
+      groupName: user.groupName,
+      name: user.name,
+      activities: activities.map(activity => ({
+        name: activity.activityName,
+        deadline: activity.deadline,
+        isCompleted: activity.isCompleted,
+      })),
+    });
   } catch (error) {
-    console.error("Error fetching group name:", error);
+    console.error("Error fetching user data:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 });
 
-// MongoDB Models
+app.post("/api/markCompleted", async (req, res) => {
+  const { activityId, isCompleted } = req.body;
+
+  console.log("Request body:", req.body);
+
+  try {
+    const updatedActivity = await Activity.findOne({ activityName: activityId });
+
+    if (!updatedActivity) {
+      return res.status(404).json({ error: "Activity not found" });
+    }
+
+    updatedActivity.isCompleted = isCompleted;
+    updatedActivity.save();
+
+    res.status(200).json({ message: "Completion status updated successfully" });
+  } catch (error) {
+    console.error("Error updating completion status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -89,21 +87,6 @@ const userSchema = new mongoose.Schema({
 });
 
 const Users = mongoose.model("User", userSchema);
-
-const groupSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    maxlength: 50,
-  },
-  // members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  // createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  // createdAt: { type: Date, default: Date.now },
-});
-
-const Groups = mongoose.model("Group", groupSchema);
 
 const activitySchema = new mongoose.Schema({
   activityName: { type: String, required: true, trim: true },
@@ -115,16 +98,6 @@ const activitySchema = new mongoose.Schema({
 
 const Activity = mongoose.model("Activity", activitySchema);
 
-const categorySchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true, trim: true },
-  color: { type: String, required: true },
-});
-
-const Category = mongoose.model("Category", categorySchema);
-
-// Routes
-
-// Serve frontend HTML files
 app.get("/register", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "register.html"));
 });
@@ -150,7 +123,6 @@ app.get("/activities", (req, res) => {
 });
 
 
-// Register User
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -176,7 +148,6 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// Login User
 app.post("/", async (req, res) => {
   const { email, password } = req.body;
 
@@ -202,17 +173,14 @@ app.post("/", async (req, res) => {
   }
 });
 
-// Join Group Endpoint
 app.post("/join", async (req, res) => {
   const { email, groupName } = req.body;
 
-  // Validate inputs
   if (!groupName) {
     return res.status(400).json({ message: "Group name are required." });
   }
 
   try {
-    // Find the group by the provided code
     const user = await Users.findOne({ email });
     if (user) {
       const group = await Users.findOne({ groupName });
@@ -231,17 +199,6 @@ app.post("/join", async (req, res) => {
   }
 });
 
-app.get("/activity", async (req, res) => {
-  try {
-    // Fetch activities from the database (customize query as needed)
-    const activities = await Activity.find(); // Optionally, add filters here
-    res.status(200).json(activities);
-  } catch (error) {
-    console.error("Error fetching activities:", error);
-    res.status(500).json({ message: "Failed to fetch activities." });
-  }
-});
-
 app.get("/choice", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "choice.html"));
 });
@@ -257,23 +214,19 @@ app.post("/create", async (req, res) => {
   }
 
   try {
-    const existingGroup = await Groups.findOne({ name: groupName });
+    const existingGroup = await Users.findOne({ groupName: groupName });
     if (existingGroup) {
       return res.status(400).json({ message: "Group name is already taken." });
     }
 
-    const newGroup = new Groups({
-      name: groupName,
-    });
 
-    const user = await Users.findOne({ email }); // Assuming email identifies the user
+    const user = await Users.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
 
     user.groupName = groupName;
     await user.save();
-    await newGroup.save();
 
 
     res.status(201).json({ message: "Group created successfully!"});
@@ -326,65 +279,15 @@ app.post("/addAct", async (req, res) => {
   }
 });
 
-// // Add Category
-// app.post("/addCat", async (req, res) => {
-//   const { categoryName, categoryColor } = req.body;
-
-//   if (!categoryName || !categoryColor) {
-//     return res
-//       .status(400)
-//       .json({ message: "Category name and color are required." });
-//   }
-
-//   try {
-//     const existingCategory = await Category.findOne({ name: categoryName });
-//     if (existingCategory) {
-//       return res.status(400).json({ message: "Category already exists." });
-//     }
-
-//     const newCategory = new Category({
-//       name: categoryName,
-//       color: categoryColor,
-//     });
-//     await newCategory.save();
-
-//     res
-//       .status(201)
-//       .json({ message: "Category added successfully!", category: newCategory });
-//   } catch (error) {
-//     console.error("Error adding category:", error);
-//     res.status(500).json({ message: "Internal server error." });
-//   }
-// });
-
-const MemberProfileSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
-  password: {
-    type: String,
-    required: true, // Make this required if it's mandatory for all profiles
-    minlength: 6, // Optional: enforce a minimum length for password
-  },
-});
-
 app.post("/editprofile", async (req, res) => {
-  const { userNow, name, password } = req.body;
+  const { email, name, password } = req.body;
 
   if (!name) {
     return res.status(400).json({ message: "Name and email are required." });
   }
 
   try {
-    const user = await Users.findOne({ userNow }); // Assuming email identifies the user
+    const user = await Users.findOne({ email: email }); 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -392,49 +295,13 @@ app.post("/editprofile", async (req, res) => {
     user.name = name;
 
     if (password) {
-      user.password = await bcrypt.hash(password, 10);
+      user.password = await bcrypt.hash(password, 8);
     }
 
     await user.save();
     res.status(200).json({ message: "Profile updated successfully." });
   } catch (error) {
     console.error("Error updating profile:", error);
-    res.status(500).json({ message: "Internal server error." });
-  }
-});
-
-// app.get("/api/user/:id", async (req, res) => {
-//   try {
-//     const user = await Users.findById(req.params.name); // Replace with actual user ID
-//     if (user) {
-//       res.status(200).json(user);
-//     } else {
-//       res.status(404).json({ message: "User not found" });
-//     }
-//   } catch (error) {
-//     res.status(500).json({ message: "Error fetching user data", error });
-//   }
-// });
-
-
-// Fetch Activities
-app.get("/activity", async (req, res) => {
-  try {
-    const activities = await Activity.find();
-    res.status(200).json(activities);
-  } catch (error) {
-    console.error("Error fetching activities:", error);
-    res.status(500).json({ message: "Failed to fetch activities." });
-  }
-});
-
-// Fetch Categories
-app.get("/categories", async (req, res) => {
-  try {
-    const categories = await Category.find();
-    res.json(categories);
-  } catch (error) {
-    console.error("Error fetching categories:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 });

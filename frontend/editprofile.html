@@ -135,6 +135,21 @@
         font-size: 0.9rem;
         color: #999;
       }
+
+      .logout-btn {
+        background-color: #ff4d4d;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: bold;
+      }
+
+      .logout-btn:hover {
+        background-color: #cc0000;
+      }
     </style>
   </head>
   <body>
@@ -143,31 +158,13 @@
       <!-- Navbar -->
       <div class="navbar">
         <a href="/activities"> <i class="fa-solid fa-arrow-left"></i></a>
+        <button id="logout-btn" class="logout-btn">Logout</button>
       </div>
 
       <!-- Centered Edit Profile Card -->
       <div class="edit-profile-card">
         <h2>Edit Profile</h2>
 
-        <!-- Profile Picture Section -->
-        <div>
-          <img
-            src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
-            alt="Profile Picture"
-            id="profile-pic-preview"
-          />
-        </div>
-        <div>
-          <button id="change-profile-picture" type="button">
-            Change Profile Picture
-          </button>
-          <input
-            type="file"
-            id="profile-picture-input"
-            accept="image/*"
-            style="display: none"
-          />
-        </div>
 
         <!-- Name Input -->
         <div>
@@ -213,6 +210,11 @@
     </div>
     <script>
       document.addEventListener("DOMContentLoaded", async function () {
+        document.getElementById("logout-btn").addEventListener("click", function () {
+          sessionStorage.clear(); 
+          alert("You have been logged out.");
+          window.location.href = "/"; 
+        });
         // Simulate fetching email from user session
         const emailInput = document.getElementById("email");
         try {
@@ -256,11 +258,12 @@
               return;
             }
 
-            const userData = { userNow, name, password };
+            const userNow = JSON.parse(sessionStorage.getItem("userNow"));
+
+
+            const userData = { email: userNow, name, password };
 
             try {
-              const userNow = JSON.parse(sessionStorage.getItem("userNow"));
-
               const response = await fetch("/editprofile", {
                 method: "POST",
                 headers: {

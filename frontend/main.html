@@ -134,6 +134,10 @@
         border-radius: 50%;
         margin-bottom: 10px;
       }
+      .completed {
+        text-decoration: line-through;
+        color: #888;
+      }
     </style>
   </head>
   <body>
@@ -143,11 +147,11 @@
         <a href="/addAct">Add Activity</a>
         <span class="group-name">Group Name: {{ groupName }}</span>
       </div>
-    
+
       <h1 style="font-size: 2rem; color: #000; margin-bottom: 20px">
         {{ groupName }}'s Activity
       </h1>
-    
+
       <!-- Current User's Activity Card -->
       <div class="activity-container">
         <div class="activity-card" v-if="currentUserActivities.length">
@@ -173,7 +177,7 @@
           </div>
         </div>
       </div>
-    
+
       <!-- Paginated Other Members' Activity Cards -->
       <div class="activity-container">
         <div
@@ -182,7 +186,11 @@
           :key="user.name"
         >
           <h2>{{ user.name }}</h2>
-          <div v-for="activity in user.activities" :key="activity.name" class="activity">
+          <div
+            v-for="activity in user.activities"
+            :key="activity.name"
+            class="activity"
+          >
             <div class="activity-name">{{ activity.name }}</div>
             <div class="activity-deadline">
               <span>{{ formatDate(activity.deadline) }}</span>
@@ -190,15 +198,19 @@
           </div>
         </div>
       </div>
-    
+
       <!-- Pagination Controls -->
       <div class="pagination" v-if="totalPages > 1">
-        <button @click="currentPage--" :disabled="currentPage === 1">Previous</button>
+        <button @click="currentPage--" :disabled="currentPage === 1">
+          Previous
+        </button>
         <span>Page {{ currentPage }} of {{ totalPages }}</span>
-        <button @click="currentPage++" :disabled="currentPage === totalPages">Next</button>
+        <button @click="currentPage++" :disabled="currentPage === totalPages">
+          Next
+        </button>
       </div>
     </div>
-    
+
     <script>
       new Vue({
         el: "#app",
@@ -212,11 +224,17 @@
         },
         computed: {
           paginatedUsers() {
+            const filteredUsers = this.users.filter(
+              (user) => user.name !== this.currentUser
+            );
             const start = (this.currentPage - 1) * this.usersPerPage;
-            return this.users.slice(start, start + this.usersPerPage);
+            return filteredUsers.slice(start, start + this.usersPerPage);
           },
           totalPages() {
-            return Math.ceil(this.users.length / this.usersPerPage);
+            const filteredUsers = this.users.filter(
+              (user) => user.name !== this.currentUser
+            );
+            return Math.ceil(filteredUsers.length / this.usersPerPage);
           },
         },
         methods: {
@@ -230,17 +248,23 @@
                 },
                 body: JSON.stringify({ email }),
               });
-    
+
               const data = await response.json();
               if (response.ok) {
                 this.groupName = data.groupName;
                 this.currentUser = data.name;
                 this.currentUserActivities = data.activities || [];
               } else {
-                console.error("Error fetching current user data:", data.message);
+                console.error(
+                  "Error fetching current user data:",
+                  data.message
+                );
               }
             } catch (error) {
-              console.error("Unexpected error fetching current user data:", error);
+              console.error(
+                "Unexpected error fetching current user data:",
+                error
+              );
             }
           },
           async fetchGroupMembers() {
@@ -252,8 +276,8 @@
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ email }), // Ensure 'email' is properly populated
-              });              
-              
+              });
+
               if (response.ok) {
                 const data = await response.json();
                 this.users = data;
@@ -281,7 +305,7 @@
                   isCompleted: activity.isCompleted,
                 }),
               });
-    
+
               if (!response.ok) {
                 console.error("Failed to update completion status");
                 activity.isCompleted = !activity.isCompleted; // Revert if error occurs
@@ -296,6 +320,6 @@
           this.fetchGroupMembers();
         },
       });
-    </script>    
+    </script>
   </body>
 </html>

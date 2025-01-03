@@ -245,12 +245,21 @@
           },
           async fetchGroupMembers() {
             try {
-              const response = await fetch("/api/groupMembers");
-              const data = await response.json();
+              const email = JSON.parse(sessionStorage.getItem("userNow"));
+              const response = await fetch("/api/groupMembers", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email }), // Ensure 'email' is properly populated
+              });              
+              
               if (response.ok) {
-                this.users = data.filter((user) => user.name !== this.currentUser);
+                const data = await response.json();
+                this.users = data;
               } else {
-                console.error("Error fetching group members:", data.message);
+                const errorText = await response.text(); // Read the response as plain text
+                console.error("Server error:", errorText);
               }
             } catch (error) {
               console.error("Unexpected error fetching group members:", error);

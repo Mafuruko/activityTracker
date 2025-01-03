@@ -58,9 +58,12 @@ app.post("/api/current", async (req, res) => {
 });
 
 app.post("/api/groupMembers", async (req, res) => {
+  const { email } = req.body;
+  console.log("Request body:", req.body);
+
+  
   try {
-    const currentUserEmail = req.body.email; // Ensure the client's email is passed
-    const currentUser = await Users.findOne({ email: currentUserEmail });
+    const currentUser = await Users.findOne({ email });
 
     if (!currentUser) {
       return res.status(404).json({ message: "Current user not found." });

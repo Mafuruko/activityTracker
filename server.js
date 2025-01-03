@@ -14,8 +14,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-// const uri = "mongodb+srv://Naufy:6969@activitytracker.jys5x.mongodb.net/";
-const uri = "mongodb://localhost:27017/activityTracker";
+const uri = "mongodb+srv://Naufy:6969@activitytracker.jys5x.mongodb.net/";
+// const uri = "mongodb://localhost:27017/activityTracker";
 mongoose
   .connect(uri, {
     useNewUrlParser: true,

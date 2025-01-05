@@ -92,7 +92,3 @@ Ikuti petunjuk untuk mendapatkan sertifikat SSL gratis.
 
 ### Kontribusi
 Kalau Anda punya ide untuk pengembangan atau menemukan bug, jangan ragu untuk membuka issue atau mengirim pull request di repository ini.
-
----
-
-Selamat mencoba dan semoga ActivityTracker membantu meningkatkan produktivitas Anda!

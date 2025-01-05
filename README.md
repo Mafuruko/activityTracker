@@ -73,7 +73,7 @@ Sekarang kita perlu mengatur Nginx agar bisa melayani aplikasi ini.
 #### 5. Cek Aplikasi
 Buka browser Anda, lalu akses domain atau IP VPS Anda:
 ```
-[http://domain-anda.com](https://activitytracker-vb4w.onrender.com)
+https://activitytracker-vb4w.onrender.com/
 ```
 
 Kalau semua langkah sudah benar, Anda akan melihat halaman utama ActivityTracker.

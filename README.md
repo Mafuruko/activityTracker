@@ -82,7 +82,7 @@ Kalau semua langkah sudah benar, Anda akan melihat halaman utama ActivityTracker
 Untuk keamanan lebih, Anda bisa menambahkan HTTPS dengan Let's Encrypt:
 ```bash
 sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d domain-anda.com
+sudo certbot --nginx -d https://activitytracker-vb4w.onrender.com/
 ```
 Ikuti petunjuk untuk mendapatkan sertifikat SSL gratis.
 
@@ -90,5 +90,3 @@ Ikuti petunjuk untuk mendapatkan sertifikat SSL gratis.
 - **403 Forbidden**: Pastikan path `root` di konfigurasi Nginx benar.
 - **404 Not Found**: Cek apakah file `index.html` ada di direktori aplikasi.
 
-### Kontribusi
-Kalau Anda punya ide untuk pengembangan atau menemukan bug, jangan ragu untuk membuka issue atau mengirim pull request di repository ini.
